@@ -1,0 +1,27 @@
+GOAL: Create tests + run E2E verification for Bibliotek.
+ACCEPTANCE: pytest passes with all tests green. uvicorn starts on port 8140 and responds to curl.
+
+CONTEXT: FastAPI app with pytest. Use pytest-asyncio if needed.
+
+CREATE tests/:
+- tests/test_auth.py — test login, token verification, role checks
+- tests/test_books.py — test book CRUD, libris search, scan endpoint
+- tests/test_circulation.py — test checkout (28-day due), return, overdue detection
+- tests/test_users.py — test user CRUD, role enforcement
+- tests/conftest.py — test client setup, DB fixture, seed data
+
+ACCEPTANCE CHECKS:
+1. pytest runs clean
+2. uvicorn src.app:app --host 0.0.0.0 --port 8140 starts
+3. curl to http://localhost:8140/api/books returns valid response
+4. curl to http://localhost:8140 returns HTML page
+
+REFERENCE: /home/svarkor/svarkor-builds/bibliotek/DESIGN.md section 227
+
+--- RESULT ---
+STATUS: | BLOCKED
+FILES: 
+DID: 
+VERIFY: 
+BLOCKERS: 
+--- END ---

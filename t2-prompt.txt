@@ -1,0 +1,25 @@
+GOAL: Create JWT auth module with password hashing.
+ACCEPTANCE: python3 -c "from src.auth import create_access_token, verify_token, hash_password, check_password; print('OK')" runs clean.
+
+CONTEXT: FastAPI app. JWT via httpOnly cookies (per DESIGN.md). bcrypt for password hashing.
+
+WRITE: src/auth.py — JWT helpers, password hashing, FastAPI dependency for role check
+
+DETAILS:
+- create_access_token(user_id, role) → JWT string (expires 24h)
+- verify_token(token) → dict with user_id, role or None
+- hash_password(password) → bcrypt hash
+- check_password(password, hash) → bool
+- require_role(allowed_roles) → FastAPI dependency function
+- POST /api/auth/login endpoint stub: (username, password) → {access_token, user}
+- Use python-jose for JWT, passlib[bcrypt] for hashing
+
+REFERENCE: /home/svarkor/svarkor-builds/bibliotek/DESIGN.md section 4, 136
+
+--- RESULT ---
+STATUS: | BLOCKED
+FILES: 
+DID: 
+VERIFY: 
+BLOCKERS: 
+--- END ---

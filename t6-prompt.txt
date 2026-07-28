@@ -1,0 +1,40 @@
+GOAL: Create all HTML templates and static files for Bibliotek frontend.
+ACCEPTANCE: python3 -c "from jinja2 import Environment, FileSystemLoader; e = Environment(loader=FileSystemLoader('/home/svarkor/svarkor-builds/bibliotek/templates')); print(len(e.list_templates()), 'templates loaded')" → outputs correct count.
+
+CONTEXT: FastAPI + Jinja2. No React/Vue — vanilla JS + CSS. Mobile-first responsive design. html5-qrcode library for camera barcode scanning.
+
+CREATE templates:
+- index.html — Haupt page with nav to scanner, dashboard, books, loans
+- login.html — Login form (username, password → POST /api/auth/login)
+- dashboard.html — Dashboard showing active loans, quick stats
+- scanner.html — Camera barcode scanner using html5-qrcode library
+- books.html — Book list (table) + search bar + add book form
+- loans.html — Loan management: checkout form, return form, overdue list
+- users.html — User management (admin only): create user, change role
+
+CREATE static/css/style.css:
+- Mobile-first responsive design
+- Clean, simple UI — functional, not fancy
+- Color coding for overdue items (red)
+- Touch-friendly button sizes for mobile
+
+CREATE static/js/app.js:
+- Navigation between pages
+- API interaction (fetch calls to /api/* endpoints)
+- JWT token management (read from cookie)
+- Page routing
+
+CREATE static/js/scanner.js:
+- html5-qrcode integration for camera barcode scanning
+- On scan: POST /api/books/scan with barcode → display result
+- Fallback: manual text input for ISBN
+
+REFERENCE: /home/svarkor/svarkor-builds/bibliotek/DESIGN.md sections 87-96, 216-225
+
+--- RESULT ---
+STATUS: | BLOCKED
+FILES: 
+DID: 
+VERIFY: 
+BLOCKERS: 
+--- END ---

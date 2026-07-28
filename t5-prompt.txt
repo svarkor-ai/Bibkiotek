@@ -1,0 +1,30 @@
+GOAL: Create user management module and wire all routers into app.py.
+ACCEPTANCE: FastAPI app starts and responds to basic API calls on port 8140.
+
+CONTEXT: FastAPI app. Jinja2 templates for HTML pages. Vanilla JS frontend.
+
+WRITE: src/users.py — User CRUD endpoints (admin/librarian)
+WRITE: src/app.py — Wire all routers, setup Jinja2, static files, startup events
+
+ENDPOINTS (users.py):
+- GET /api/users → all users (admin+librarian)
+- POST /api/users → create user (admin only)
+- PUT /api/users/{id} → update role (admin only)
+- GET /api/users/me → current user profile (authenticated)
+
+WRITE: src/app.py — FastAPI entry point:
+- Mount routers: /api/auth, /api/books, /api/loans, /api/users
+- Mount static files: /static/
+- Mount templates: Jinja2Templates(directory="templates/")
+- Startup event: create tables, seed admin user, seed HCF categories
+- Root: serve /templates/index.html
+
+REFERENCE: /home/svarkor/svarkor-builds/bibliotek/DESIGN.md sections 3,7,8,74-79,80-85
+
+--- RESULT ---
+STATUS: | BLOCKED
+FILES: 
+DID: 
+VERIFY: 
+BLOCKERS: 
+--- END ---

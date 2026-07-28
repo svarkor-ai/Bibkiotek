@@ -1,0 +1,26 @@
+GOAL: Create book CRUD + Libris XSearch integration module.
+ACCEPTANCE: python3 -c "from src.books import libris_search, libris_lookup_by_isbn; print('OK')" runs clean.
+
+CONTEXT: FastAPI app. Libris XSearch API at https://libris.kb.se/api/xsearch (VERIFIED working).
+
+WRITE: src/books.py — Book CRUD endpoints + Libris search integration
+
+DETAILS:
+- GET /api/books → all books (paginated)
+- GET /api/books/{id} → single book
+- POST /api/books → add book (admin/librarian)
+- GET /api/books/search?q=query → search local DB
+- POST /api/books/scan → (barcode=ean13) → libris lookup → return book info
+- libris_search(query, limit) → list[dict] from XSearch
+- libris_lookup_by_isbn(isbn) → dict or None
+- classify_hcf(title, author, year) → 'hcf'|'hcg'|'hcb'|'adult'|None
+
+REFERENCE: /home/svarkor/svarkor-builds/bibliotek/DESIGN.md section 5, 138
+
+--- RESULT ---
+STATUS: | BLOCKED
+FILES: 
+DID: 
+VERIFY: 
+BLOCKERS: 
+--- END ---

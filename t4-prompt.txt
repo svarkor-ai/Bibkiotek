@@ -1,0 +1,29 @@
+GOAL: Create circulation module with 28-day lending rules.
+ACCEPTANCE: python3 -c "from src.circulation import checkout, return_book, is_overdue; print('OK')" runs clean.
+
+CONTEXT: FastAPI app. 28-day fixed lending period (hard constraint).
+
+WRITE: src/circulation.py — checkout/return logic, overdue detection
+
+ENDPOINTS:
+- POST /api/loans/checkout → (book_id, user_id, librarian_id) → creates Loan with due_date = today + 28 days
+- POST /api/loans/return → (loan_id) → sets return_date, frees book
+- GET /api/loans/active → all active loans with overdue flag
+- GET /api/loans/overdue → all overdue loans (admin/librarian)
+- GET /api/loans/user/{user_id} → user's loan history
+
+LOGIC:
+- due_date = checkout_date + timedelta(days=28)
+- is_overdue(loan) → return_date is None AND today > due_date
+- Can only checkout if book is not currently checked out (no active loan)
+- Can only return active loans
+
+REFERENCE: /home/svarkor/svarkor-builds/bibliotek/DESIGN.md section 6, 150-154
+
+--- RESULT ---
+STATUS: | BLOCKED
+FILES: 
+DID: 
+VERIFY: 
+BLOCKERS: 
+--- END ---

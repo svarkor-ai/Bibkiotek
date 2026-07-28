@@ -1,0 +1,26 @@
+GOAL: Create SQLAlchemy models and database session for Bibliotek.
+ACCEPTANCE: python3 -c "from src.database import get_engine, get_session; print('OK')" runs clean.
+
+CONTEXT: FastAPI app on SQLite. 3 main models: User, Book, Loan.
+
+WRITE: src/database.py — SQLAlchemy engine, session, Base
+WRITE: src/models.py — SQLAlchemy ORM models (User, Book, Loan, HcfCategory)
+
+DETAILS:
+- database.py: get_engine(), get_session(), Base.metadata.create_all()
+- models.py: User(id, username, password_hash, role, email, created_at), Book(id, isbn, title, author, publisher, year, cover_url, hcf_category, created_at, created_by), Loan(id, book_id, user_id, librarian_id, checkout_date, due_date, return_date, created_at), HcfCategory(id, code, name, description, min_age, max_age)
+- Use SQLAlchemy 2.0 style (declarative_base)
+- SQLite WAL mode for concurrency
+- role in User: 'admin', 'librarian', 'user'
+- hcf_category in Book: 'hcf', 'hcg', 'hcb', 'adult', None
+
+REFERENCE: /home/svarkor/svarkor-builds/bibliotek/DESIGN.md sections 1,2,98-135
+REFERENCE: /home/svarkor/svarkor-builds/bibliotek/pyproject.toml
+
+--- RESULT ---
+STATUS: | BLOCKED
+FILES: 
+DID: 
+VERIFY: 
+BLOCKERS: 
+--- END ---
