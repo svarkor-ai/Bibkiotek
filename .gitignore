@@ -1,12 +1,8 @@
-.venv/
+# Bibliotek - Git Ignore
+*.db
+*.db-shm
+*.db-wal
 __pycache__/
 *.pyc
-node_modules/
+.venv/
 .env
-*.env
-.secrets/
-builds/
-dist/
-*.log
-*.db
-__pycache__/
