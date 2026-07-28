@@ -15,6 +15,7 @@ Endpoints
 """
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from src.auth import check_password, hash_password, require_role
@@ -195,16 +196,20 @@ def create_router() -> APIRouter:
     # ------------------------------------------------------------------
     # POST /api/users/register — public registration
     # ------------------------------------------------------------------
+    class RegisterRequest(BaseModel):
+        """Request body for public user registration."""
+        username: str
+        password: str
+        role: str = "user"
+        email: str | None = None
+
     @router.post("/register")
     async def register_endpoint(
-        username: str = Body(..., min_length=2, max_length=50),
-        password: str = Body(..., min_length=4),
-        role: str = Body("user"),
-        email: str | None = Body(None),
+        body: RegisterRequest,
         db: Session = Depends(get_session),
     ) -> dict:
         """Public user registration."""
-        user = register_user(db, username, password, role, email)
+        user = register_user(db, body.username, body.password, body.role, body.email)
         return {
             "id": user.id,
             "username": user.username,

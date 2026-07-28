@@ -60,11 +60,61 @@ async def startup() -> None:
 async def home(request: Request) -> dict:
     """Render the home page (index.html)."""
     return templates.TemplateResponse(
+        request,
         "index.html",
         context={
             "request": request,
             "year": datetime.now(timezone.utc).year,
         },
+    )
+
+
+# ---------------------------------------------------------------------------
+# Additional pages
+# ---------------------------------------------------------------------------
+
+@app.get("/login")
+async def login_page(request: Request) -> dict:
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        context={"request": request},
+    )
+
+
+@app.get("/register")
+async def register_page(request: Request) -> dict:
+    return templates.TemplateResponse(
+        request,
+        "register.html",
+        context={"request": request},
+    )
+
+
+@app.get("/books")
+async def books_page(request: Request) -> dict:
+    return templates.TemplateResponse(
+        request,
+        "books.html",
+        context={"request": request},
+    )
+
+
+@app.get("/admin")
+async def admin_page(request: Request) -> dict:
+    return templates.TemplateResponse(
+        request,
+        "admin.html",
+        context={"request": request},
+    )
+
+
+@app.get("/loans")
+async def loans_page(request: Request) -> dict:
+    return templates.TemplateResponse(
+        request,
+        "loans.html",
+        context={"request": request},
     )
 
 

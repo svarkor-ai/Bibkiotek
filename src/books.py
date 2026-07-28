@@ -20,11 +20,14 @@ from typing import Any
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from src.config import SECRET_KEY, JWT_ALGORITHM
 from src.models import Book as BookModel
 from src.database import get_engine
+from src.auth import require_role
 
 log = logging.getLogger(__name__)
 
@@ -89,6 +92,28 @@ class Book:
         if isinstance(d.get("created_at"), datetime):
             d["created_at"] = d["created_at"].isoformat()
         return d
+
+
+# ---------------------------------------------------------------------------
+# Pydantic schemas for API request validation
+# ---------------------------------------------------------------------------
+
+
+class BookCreate(BaseModel):
+    """Schema for the POST /api/books request body."""
+
+    isbn: str = Field(..., description="ISBN-13 / EAN-13 string")
+    title: str = Field(..., description="Book title")
+    author: str | None = Field(None, description="Author name")
+    publisher: str | None = Field(None, description="Publisher name")
+    year: int | None = Field(None, description="Publication year")
+    hcf_category: str | None = Field(
+        None,
+        description=(
+            "One of ``hcf``, ``hcg``, ``hcb``, ``adult``, or ``None``."
+        ),
+    )
+    user_id: int | None = Field(None, description="ID of the creating user")
 
 
 # ---------------------------------------------------------------------------
@@ -457,6 +482,7 @@ def create_router() -> APIRouter:
     def get_book_endpoint(
         book_id: int,
         db: Session = Depends(get_db),
+        current_user: dict = Depends(require_role(["admin", "reader"])),
     ) -> dict:
         """GET /api/books/{id} — single book by primary key."""
         book = get_book(db, book_id)
@@ -464,20 +490,19 @@ def create_router() -> APIRouter:
 
     @router.post("", response_model=dict)
     async def create_book_endpoint(
-        request: Request,
+        body: BookCreate,
         db: Session = Depends(get_db),
     ) -> dict:
         """POST /api/books — add a new book."""
-        body = await request.json()
         book = create_book(
             db,
-            isbn=body["isbn"],
-            title=body["title"],
-            author=body.get("author"),
-            publisher=body.get("publisher"),
-            year=body.get("year"),
-            hcf_category=body.get("hcf_category"),
-            user_id=body.get("user_id"),
+            isbn=body.isbn,
+            title=body.title,
+            author=body.author,
+            publisher=body.publisher,
+            year=body.year,
+            hcf_category=body.hcf_category,
+            user_id=body.user_id,
         )
         return book.to_dict()
 
