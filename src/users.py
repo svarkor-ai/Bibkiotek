@@ -14,7 +14,7 @@ Endpoints
     PUT    /api/users/{id}              → {user}           [admin/librarian]
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from src.auth import check_password, hash_password, require_role
@@ -197,10 +197,10 @@ def create_router() -> APIRouter:
     # ------------------------------------------------------------------
     @router.post("/register")
     async def register_endpoint(
-        username: str = Query(..., min_length=2, max_length=50),
-        password: str = Query(..., min_length=4),
-        role: str = Query("user"),
-        email: str | None = Query(None),
+        username: str = Body(..., min_length=2, max_length=50),
+        password: str = Body(..., min_length=4),
+        role: str = Body("user"),
+        email: str | None = Body(None),
         db: Session = Depends(get_session),
     ) -> dict:
         """Public user registration."""

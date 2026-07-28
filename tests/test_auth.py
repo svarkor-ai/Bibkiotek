@@ -94,7 +94,7 @@ class TestLoginEndpoint:
     def test_login_admin_success(self, client):
         resp = client.post(
             "/api/auth/login",
-            params={"username": "admin", "password": "admin"},
+            json={"username": "admin", "password": "admin"},
         )
         assert resp.status_code == 200
         body = resp.json()
@@ -105,21 +105,21 @@ class TestLoginEndpoint:
     def test_login_wrong_password(self, client):
         resp = client.post(
             "/api/auth/login",
-            params={"username": "admin", "password": "wrong"},
+            json={"username": "admin", "password": "wrong"},
         )
         assert resp.status_code == 401
 
     def test_login_nonexistent_user(self, client):
         resp = client.post(
             "/api/auth/login",
-            params={"username": "ghost", "password": "ghost"},
+            json={"username": "ghost", "password": "ghost"},
         )
         assert resp.status_code == 401
 
     def test_login_returns_valid_jwt(self, client):
         resp = client.post(
             "/api/auth/login",
-            params={"username": "admin", "password": "admin"},
+            json={"username": "admin", "password": "admin"},
         )
         token = resp.json()["access_token"]
         payload = verify_token(token)

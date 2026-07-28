@@ -232,7 +232,7 @@ class TestRBACEndpoints:
         """User registration is public (no auth required)."""
         resp = client.post(
             "/api/users/register",
-            params={"username": "newreg", "password": "regpass", "role": "user"},
+            json={"username": "newreg", "password": "regpass", "role": "user"},
         )
         assert resp.status_code == 200
         assert resp.json()["username"] == "newreg"

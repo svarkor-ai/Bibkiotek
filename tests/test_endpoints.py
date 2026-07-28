@@ -13,7 +13,7 @@ class TestAuthEndpoints:
     def test_login_success(self, client):
         resp = client.post(
             "/api/auth/login",
-            params={"username": "admin", "password": "admin"},
+            json={"username": "admin", "password": "admin"},
         )
         assert resp.status_code == 200
         body = resp.json()
@@ -23,7 +23,7 @@ class TestAuthEndpoints:
     def test_login_wrong_password(self, client):
         resp = client.post(
             "/api/auth/login",
-            params={"username": "admin", "password": "wrong"},
+            json={"username": "admin", "password": "wrong"},
         )
         assert resp.status_code == 401
 
@@ -31,7 +31,7 @@ class TestAuthEndpoints:
         """Obtain a token and use it to access a protected route."""
         login_resp = client.post(
             "/api/auth/login",
-            params={"username": "admin", "password": "admin"},
+            json={"username": "admin", "password": "admin"},
         )
         token = login_resp.json()["access_token"]
 
@@ -278,7 +278,7 @@ class TestUsersEndpoints:
     def test_register(self, client):
         resp = client.post(
             "/api/users/register",
-            params={"username": "reguser", "password": "regpass", "role": "user"},
+            json={"username": "reguser", "password": "regpass", "role": "user"},
         )
         assert resp.status_code == 200
         body = resp.json()
@@ -369,7 +369,7 @@ class TestFullWorkflow:
         # Register
         reg_resp = client.post(
             "/api/users/register",
-            params={
+            json={
                 "username": "flowuser",
                 "password": "flowpass",
                 "role": "user",
@@ -380,7 +380,7 @@ class TestFullWorkflow:
         # Login
         login_resp = client.post(
             "/api/auth/login",
-            params={"username": "flowuser", "password": "flowpass"},
+            json={"username": "flowuser", "password": "flowpass"},
         )
         assert login_resp.status_code == 200
         assert "access_token" in login_resp.json()

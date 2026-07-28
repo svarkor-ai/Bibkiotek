@@ -138,7 +138,7 @@ def _login(client: TestClient, username: str, password: str) -> str:
     """Login and return the JWT token string."""
     resp = client.post(
         "/api/auth/login",
-        params={"username": username, "password": password},
+        json={"username": username, "password": password},
     )
     assert resp.status_code == 200, f"Login failed: {resp.text}"
     return resp.json()["access_token"]
