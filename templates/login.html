@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bibliotek — Logga in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a href="/" class="navbar-brand">
+          <span class="brand-icon">📚</span>
+          Bibliotek
+        </a>
+        <button class="hamburger" aria-label="Meny" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links" id="navLinks">
+          <li><a href="/">Hem</a></li>
+          <li><a href="/register">Skapa konto</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Login form -->
+    <main>
+      <div style="max-width:400px;margin:2rem auto;">
+        <h1 style="font-family:var(--font-serif);font-size:1.6rem;margin-bottom:.5rem;text-align:center;">Logga in</h1>
+        <p class="text-center" style="color:var(--clr-text-muted);margin-bottom:1.5rem;">Ange dina uppgifter för att fortsätta.</p>
+
+        <div class="card">
+          {% if error %}
+          <div class="form-error" style="margin-bottom:1rem;">{{ error }}</div>
+          {% endif %}
+
+          <form id="loginForm" method="post" action="/api/auth/login">
+            <div class="form-group">
+              <label for="username">Användarnamn</label>
+              <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+            </div>
+            <div class="form-group">
+              <label for="password">Lösenord</label>
+              <input type="password" id="password" name="password" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-full" id="loginBtn">Logga in</button>
+          </form>
+        </div>
+
+        <p class="text-center mt-2" style="font-size:.9rem;">
+          Har du inget konto? <a href="/register">Skapa ett konto</a>
+        </p>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Bibliotek &copy; {{ year if year else "2025" }}. Byggt med ❤️ i Sverige.</p>
+    </footer>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+
+    /* Handle login via API */
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const form = e.target;
+      const formData = new FormData(form);
+      const username = formData.get('username');
+      const password = formData.get('password');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Loggar in...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: 'Inloggning misslyckades' }));
+          toast(err.detail || 'Inloggning misslyckades', 'error');
+        } else {
+          const data = await res.json();
+          setAuth(data.access_token, data.user);
+          toast('Välkommen tillbaka!', 'success');
+          window.location.href = '/books';
+        }
+      } catch (err) {
+        toast('Nätverksfel: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Logga in';
+      }
+    });
+  </script>
+</body>
+</html>

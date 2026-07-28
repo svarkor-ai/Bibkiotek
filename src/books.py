@@ -1,6 +1,6 @@
 """Bibliotek — Book CRUD + Swedish Libris XSearch integration + FastAPI router.
 
-Plain functions accept a DB session (``session.Session``) as their first
+Plain functions accept a DB session (``sqlalchemy.orm.Session``) as their first
 argument so that callers can control lifecycle explicitly.  A standalone
 ``Book`` dataclass is provided for use when the ORM is not yet available.
 
@@ -13,9 +13,9 @@ list_books · scan_barcode · classify_hcf · create_router
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
-from typing import Any, Iterator
+from dataclasses import dataclass, asdict
+from datetime import datetime
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -23,18 +23,22 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from src.config import SECRET_KEY, JWT_ALGORITHM
-from src.models import Book as BookModel, User
+from src.models import Book as BookModel
 from src.database import get_engine
-from sqlalchemy.orm import Session
 
+log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # FastAPI session dependency — yields a Session, auto-commits/rollbacks
 # ---------------------------------------------------------------------------
 
 
-def get_db():
-    """FastAPI dependency: yields a DB session with commit/rollback."""
+def _iter_session():
+    """Yield a SQLAlchemy session; auto-commits/rollbacks on exception.
+
+    NOTE: plain generator (no @contextmanager) — used via `yield from` in
+    the FastAPI dependency ``get_db()`` which wraps it in its own cleanup.
+    """
     session = Session(get_engine())
     try:
         yield session
@@ -45,6 +49,12 @@ def get_db():
     finally:
         session.close()
 
+
+def get_db():
+    """FastAPI dependency: yields a DB session with commit/rollback."""
+    yield from _iter_session()
+
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -52,12 +62,6 @@ def get_db():
 LIBRIS_BASE = "https://libris.kb.se/api/xsearch"
 LIBRIS_TIMEOUT = 10.0
 HCF_CATEGORIES = ("hcf", "hcg", "hcb", "adult")
-
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
-
-log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Portable dataclass (works without ORM)
@@ -85,40 +89,6 @@ class Book:
         if isinstance(d.get("created_at"), datetime):
             d["created_at"] = d["created_at"].isoformat()
         return d
-
-
-# ---------------------------------------------------------------------------
-# Auth helper (minimal — mirrors src.auth so books.py stays standalone)
-# ---------------------------------------------------------------------------
-
-_auth_scheme = HTTPBearer(auto_error=False)
-
-
-def _require_auth(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_auth_scheme),
-) -> dict:
-    """Require a valid JWT and return {user_id, role}."""
-    from jose import JWTError, jwt
-
-    if credentials is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    try:
-        payload = jwt.decode(
-            credentials.credentials, SECRET_KEY, algorithms=[JWT_ALGORITHM]
-        )
-        return {
-            "user_id": int(payload["sub"]),
-            "role": payload["role"],
-        }
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -279,7 +249,7 @@ def create_book(
     Parameters
     ----------
     db:
-        SQLAlchemy session (caller owns lifecycle — managed by the router).
+        SQLAlchemy session (caller owns lifecycle).
     isbn:
         ISBN-13 / EAN-13 string.
     title:
@@ -341,11 +311,6 @@ def create_book(
 def get_book(db: Session, book_id: int) -> Book:
     """Retrieve a single book by primary key.
 
-    Returns
-    -------
-    Book
-        The book if found.
-
     Raises
     ------
     HTTPException(404):
@@ -367,17 +332,6 @@ def list_books(
     hcf_category: str | None = None,
 ) -> tuple[list[Book], int]:
     """Return a paginated list of books.
-
-    Parameters
-    ----------
-    db:
-        SQLAlchemy session.
-    limit:
-        Max items per page (default 20).
-    offset:
-        Number of items to skip (default 0).
-    hcf_category:
-        Optional filter by HCF category code.
 
     Returns
     -------
@@ -408,18 +362,6 @@ def scan_barcode(db: Session, barcode: str) -> Book | None:
     1. Try a local DB lookup by exact ISBN match.
     2. If not found locally, query Libris XSearch and create a new
        book record from the returned data.
-
-    Parameters
-    ----------
-    db:
-        SQLAlchemy session.
-    barcode:
-        The raw barcode / ISBN string.
-
-    Returns
-    -------
-    Book | None
-        The found / created book, or None if nothing matched.
     """
     clean = barcode.strip().replace("-", "").replace(" ", "")
 
@@ -489,7 +431,7 @@ def create_router() -> APIRouter:
         q: str = Query(..., min_length=1),
         db: Session = Depends(get_db),
     ) -> dict:
-        """GET /api/books/search?q=<query> — search local DB + Libris."""
+        """GET /api/books/search?q=<query> — search local DB."""
         terms = f"%{q}%"
         rows = (
             db.query(BookModel)
@@ -525,11 +467,7 @@ def create_router() -> APIRouter:
         request: Request,
         db: Session = Depends(get_db),
     ) -> dict:
-        """POST /api/books — add a new book.
-
-        Expects a JSON body with fields: isbn, title, author, publisher,
-        year, hcf_category, user_id.
-        """
+        """POST /api/books — add a new book."""
         body = await request.json()
         book = create_book(
             db,

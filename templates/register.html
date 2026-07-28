@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bibliotek — Skapa konto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a href="/" class="navbar-brand">
+          <span class="brand-icon">📚</span>
+          Bibliotek
+        </a>
+        <button class="hamburger" aria-label="Meny" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links" id="navLinks">
+          <li><a href="/">Hem</a></li>
+          <li><a href="/login">Logga in</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Registration form -->
+    <main>
+      <div style="max-width:420px;margin:2rem auto;">
+        <h1 style="font-family:var(--font-serif);font-size:1.6rem;margin-bottom:.5rem;text-align:center;">Skapa konto</h1>
+        <p class="text-center" style="color:var(--clr-text-muted);margin-bottom:1.5rem;">Fyll i uppgifterna för att skapa ett nytt konto.</p>
+
+        <div class="card">
+          {% if error %}
+          <div class="form-error" style="margin-bottom:1rem;">{{ error }}</div>
+          {% endif %}
+
+          <form id="registerForm">
+            <div class="form-group">
+              <label for="username">Användarnamn</label>
+              <input type="text" id="username" name="username" autocomplete="username" required minlength="3" maxlength="50">
+              <div class="form-error" id="usernameError"></div>
+            </div>
+            <div class="form-group">
+              <label for="email">E-post</label>
+              <input type="email" id="email" name="email" autocomplete="email" required>
+              <div class="form-error" id="emailError"></div>
+            </div>
+            <div class="form-group">
+              <label for="password">Lösenord</label>
+              <input type="password" id="password" name="password" autocomplete="new-password" required minlength="6">
+              <div class="form-error" id="passwordError"></div>
+            </div>
+            <div class="form-group">
+              <label for="passwordConfirm">Bekräfta lösenord</label>
+              <input type="password" id="passwordConfirm" name="passwordConfirm" autocomplete="new-password" required>
+              <div class="form-error" id="confirmError"></div>
+            </div>
+            <button type="submit" class="btn btn-primary w-full" id="registerBtn">Skapa konto</button>
+          </form>
+        </div>
+
+        <p class="text-center mt-2" style="font-size:.9rem;">
+          Har du redan ett konto? <a href="/login">Logga in</a>
+        </p>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Bibliotek &copy; {{ year if year else "2025" }}. Byggt med ❤️ i Sverige.</p>
+    </footer>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+
+    /* Handle registration */
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const passwordConfirm = document.getElementById('passwordConfirm').value;
+
+      /* Client-side validation */
+      let hasError = false;
+
+      if (username.length < 3) {
+        showError('usernameError', 'Användarnamnet måste vara minst 3 tecken.');
+        hasError = true;
+      }
+
+      if (password.length < 6) {
+        showError('passwordError', 'Lösenordet måste vara minst 6 tecken.');
+        hasError = true;
+      }
+
+      if (password !== passwordConfirm) {
+        showError('confirmError', 'Lösenorden stämmer inte överens.');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      const btn = document.getElementById('registerBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Skapar konto...';
+
+      try {
+        const res = await fetch('/api/users/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, email }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: 'Registrering misslyckades' }));
+          toast(err.detail || 'Registrering misslyckades', 'error');
+        } else {
+          toast('Konto skapat! Du kan nu logga in.', 'success');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 1500);
+        }
+      } catch (err) {
+        toast('Nätverksfel: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Skapa konto';
+      }
+    });
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = msg;
+    }
+
+    function clearErrors() {
+      document.querySelectorAll('.form-error').forEach(e => {
+        if (!e.classList.contains('toast') && !e.closest('.toast')) e.textContent = '';
+      });
+    }
+  </script>
+</body>
+</html>

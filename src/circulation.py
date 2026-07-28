@@ -118,7 +118,11 @@ def is_overdue(loan: Loan) -> bool:
     """Return True if the loan is overdue: active (no return) and past due_date."""
     if loan.return_date is not None:
         return False
-    return datetime.now(timezone.utc) > loan.due_date
+    now = datetime.now(timezone.utc)
+    due = loan.due_date
+    if due.tzinfo is None:
+        due = due.replace(tzinfo=timezone.utc)
+    return now > due
 
 
 def get_user_loans(
@@ -217,7 +221,7 @@ def create_router() -> APIRouter:
     @router.post("/checkout")
     async def loan_checkout(
         body: dict = Body(...),
-        current_user: Any = _dep_active,
+        current_user: Any = Depends(_dep_active),
         db: Session = Depends(get_session),
     ) -> dict:
         """Check out a book."""
@@ -240,7 +244,7 @@ def create_router() -> APIRouter:
     @router.post("/return")
     async def loan_return(
         body: dict = Body(...),
-        current_user: Any = _dep_admin,
+        current_user: Any = Depends(_dep_admin),
         db: Session = Depends(get_session),
     ) -> dict:
         """Return a book."""
@@ -259,7 +263,7 @@ def create_router() -> APIRouter:
     # ------------------------------------------------------------------
     @router.get("/active")
     async def list_active(
-        current_user: Any = _dep_active,
+        current_user: Any = Depends(_dep_active),
         db: Session = Depends(get_session),
     ) -> list[dict]:
         """All active (unreturned) loans with overdue flag."""
@@ -275,7 +279,7 @@ def create_router() -> APIRouter:
     # ------------------------------------------------------------------
     @router.get("/overdue")
     async def list_overdue(
-        current_user: Any = _dep_admin,
+        current_user: Any = Depends(_dep_admin),
         db: Session = Depends(get_session),
     ) -> list[dict]:
         """All overdue active loans (admin/librarian only)."""
@@ -288,7 +292,7 @@ def create_router() -> APIRouter:
     @router.get("/user/{user_id}")
     async def list_user_loans(
         user_id: int,
-        current_user: Any = _dep_active,
+        current_user: Any = Depends(_dep_active),
         db: Session = Depends(get_session),
     ) -> list[dict]:
         """Loan history for a specific user."""

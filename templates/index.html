@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bibliotek — Hem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a href="/" class="navbar-brand">
+          <span class="brand-icon">📚</span>
+          Bibliotek
+        </a>
+        <button class="hamburger" aria-label="Meny" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links" id="navLinks">
+          <li><a href="/login">Logga in</a></li>
+          <li><a href="/register">Skapa konto</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <main>
+      <div class="hero">
+        <h1>Välkommen till Bibliotek</h1>
+        <p>Ditt digitala bibliotekssystem. Leta bland böcker, låna och returnera — allt från en plats.</p>
+        <div class="flex gap-1 mt-2" style="justify-content:center;">
+          <a href="/login" class="btn btn-primary">Logga in</a>
+          <a href="/register" class="btn btn-secondary">Skapa konto</a>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="card mt-3">
+        <h2 class="text-center" style="font-family:var(--font-serif);margin-bottom:1rem;">Funktioner</h2>
+        <div class="book-grid">
+          <div class="card" style="margin-bottom:0;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">🔍</div>
+            <h3 class="card-title">Sök bland böcker</h3>
+            <p class="card-subtitle mt-1">Hitta böcker med titel, författare eller ISBN.</p>
+          </div>
+          <div class="card" style="margin-bottom:0;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">📖</div>
+            <h3 class="card-title">Låna och returnera</h3>
+            <p class="card-subtitle mt-1">Hantera dina lån enkelt med påminnelser.</p>
+          </div>
+          <div class="card" style="margin-bottom:0;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">📱</div>
+            <h3 class="card-title">Stämma av streckkod</h3>
+            <p class="card-subtitle mt-1">Skanna ISBN med telefonkameran.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Bibliotek &copy; {{ year if year else "2025" }}. Byggt med ❤️ i Sverige.</p>
+    </footer>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+  </script>
+</body>
+</html>

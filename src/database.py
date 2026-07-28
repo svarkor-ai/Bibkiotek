@@ -76,9 +76,31 @@ from sqlalchemy import Engine  # noqa: E402, F401
 # Session factory
 # ---------------------------------------------------------------------------
 
+
 @contextmanager
-def get_session() -> Iterator[Session]:
-    """Yield a SQLAlchemy session; auto-commits on success, rollback on error."""
+def get_session_cm() -> Iterator[Session]:
+    """Context-manager version of get_session.
+
+    Used for manual usage (``with get_session_cm() as db``) such as in
+    ``app.py`` startup / shutdown hooks.
+    """
+    session = Session(get_engine())
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def get_session():
+    """FastAPI dependency: yields a SQLAlchemy session.
+
+    Used via ``db: Session = Depends(get_session)`` in route handlers.
+    FastAPI handles the lifecycle automatically.
+    """
     session = Session(get_engine())
     try:
         yield session

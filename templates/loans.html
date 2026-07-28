@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bibliotek — Mina lån</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a href="/" class="navbar-brand">
+          <span class="brand-icon">📚</span>
+          Bibliotek
+        </a>
+        <button class="hamburger" aria-label="Meny" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links" id="navLinks">
+          {% if user %}
+          <li><a href="/books">Böcker</a></li>
+          <li><a href="/loans">Mina lån</a></li>
+          {% if is_admin %}
+          <li><a href="/admin">Admin</a></li>
+          {% endif %}
+          <li>
+            <span class="user-badge">
+              <span>{{ user.username }}</span>
+              <span class="role-tag">{{ user.role }}</span>
+            </span>
+          </li>
+          <li>
+            <button onclick="handleLogout()">Logga ut</button>
+          </li>
+          {% else %}
+          <li><a href="/login">Logga in</a></li>
+          <li><a href="/register">Skapa konto</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Loans page -->
+    <main>
+      <h1 style="font-family:var(--font-serif);font-size:1.5rem;margin-bottom:1.5rem;">Mina lån</h1>
+
+      <div id="tabBar" class="flex gap-1 mb-2" style="flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm tab-btn active" data-tab="active" onclick="showTab('active')">
+          Aktiva lån
+        </button>
+        <button class="btn btn-secondary btn-sm tab-btn" data-tab="history" onclick="showTab('history')">
+          Historik
+        </button>
+        {% if is_librarian %}
+        <button class="btn btn-danger btn-sm tab-btn" data-tab="overdue" onclick="showTab('overdue')">
+          Förfallna
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- Active loans -->
+      <div id="tab-active" class="tab-content">
+        <div id="activeLoans" class="loan-list">
+          <!-- Populated by JS -->
+        </div>
+        <div id="activeEmpty" class="empty-state" style="display:none;">
+          <div class="empty-icon">📖</div>
+          <p>Du har inga aktiva lån.</p>
+        </div>
+      </div>
+
+      <!-- Loan history -->
+      <div id="tab-history" class="tab-content" style="display:none;">
+        <div id="loanHistory" class="loan-list">
+          <!-- Populated by JS -->
+        </div>
+        <div id="historyEmpty" class="empty-state" style="display:none;">
+          <div class="empty-icon">📋</div>
+          <p>Ingen låneshistorik finns.</p>
+        </div>
+      </div>
+
+      <!-- Overdue (librarian/admin) -->
+      <div id="tab-overdue" class="tab-content" style="display:none;">
+        <div id="overdueLoans" class="loan-list">
+          <!-- Populated by JS -->
+        </div>
+        <div id="overdueEmpty" class="empty-state" style="display:none;">
+          <div class="empty-icon">✅</div>
+          <p>Inga förfallna lån — alla är i tid!</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Bibliotek &copy; {{ year if year else "2025" }}. Byggt med ❤️ i Sverige.</p>
+    </footer>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+
+    if (!isLoggedIn()) {
+      window.location.href = '/login';
+      return;
+    }
+
+    function showTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('btn-primary', 'active');
+        el.classList.add('btn-secondary');
+      });
+      document.getElementById('tab-' + tab).style.display = 'block';
+      const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
+      activeBtn.classList.remove('btn-secondary');
+      activeBtn.classList.add('btn-primary', 'active');
+    }
+
+    /* --- Load active loans --- */
+    async function loadActiveLoans() {
+      const list = document.getElementById('activeLoans');
+      const empty = document.getElementById('activeEmpty');
+      list.innerHTML = '';
+      empty.style.display = 'none';
+
+      try {
+        const loans = await api('/api/loans/active');
+        if (loans.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        loans.forEach(loan => {
+          list.appendChild(createLoanItem(loan));
+        });
+      } catch (err) {
+        toast('Kunde inte läsa aktiva lån: ' + err.message, 'error');
+      }
+    }
+
+    /* --- Load full history --- */
+    async function loadHistory() {
+      const list = document.getElementById('loanHistory');
+      const empty = document.getElementById('historyEmpty');
+      list.innerHTML = '';
+      empty.style.display = 'none';
+
+      try {
+        const loans = await api(`/api/loans/user/${APP.user.id}`);
+        if (loans.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        loans.forEach(loan => {
+          list.appendChild(createLoanItem(loan));
+        });
+      } catch (err) {
+        toast('Kunde inte läsa historik: ' + err.message, 'error');
+      }
+    }
+
+    /* --- Load overdue (librarian) --- */
+    async function loadOverdue() {
+      if (!isLibrarian()) return;
+
+      const list = document.getElementById('overdueLoans');
+      const empty = document.getElementById('overdueEmpty');
+      list.innerHTML = '';
+      empty.style.display = 'none';
+
+      try {
+        const loans = await api('/api/loans/overdue');
+        if (loans.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        loans.forEach(loan => {
+          list.appendChild(createLoanItem(loan));
+        });
+      } catch (err) {
+        toast('Kunde inte läsa förfallna lån: ' + err.message, 'error');
+      }
+    }
+
+    /* --- Create loan item --- */
+    function createLoanItem(loan) {
+      const li = document.createElement('li');
+      li.className = 'loan-item';
+
+      let statusClass = 'active';
+      if (loan.return_date) statusClass = 'returned';
+      else if (loan.overdue) statusClass = 'active overdue';
+      li.classList.add(statusClass);
+
+      let statusHtml = '';
+      if (loan.overdue && !loan.return_date) {
+        statusHtml = `<span class="badge badge-overdue">SEN — ${Math.abs(daysUntilDue(loan.due_date))} dagar</span>`;
+      } else if (!loan.return_date) {
+        const days = daysUntilDue(loan.due_date);
+        if (days <= 3) {
+          statusHtml = `<span class="badge badge-checked">${days} dagar kvar</span>`;
+        } else {
+          statusHtml = `<span class="badge badge-available">${days} dagar kvar</span>`;
+        }
+      } else {
+        statusHtml = `<span class="badge badge-available">Returnerad</span>`;
+      }
+
+      const dueInfo = loan.return_date
+        ? `Returnerad: ${formatDate(loan.return_date)}`
+        : `Förfaller: ${formatDate(loan.due_date)}`;
+
+      li.innerHTML = `
+        <div class="flex justify-between items-center flex-wrap gap-1">
+          <span class="loan-book-title">${escapeHtml(loan.book_title || 'Okänd bok')}</span>
+          ${statusHtml}
+        </div>
+        <div class="loan-info">
+          Utlånad: ${formatDate(loan.checkout_date)} &nbsp;|&nbsp; ${dueInfo}
+          <br>
+          Librarianie: ${escapeHtml(loan.librarian_name || '—')}
+        </div>
+      `;
+      return li;
+    }
+
+    /* --- Load all --- */
+    loadActiveLoans();
+    loadHistory();
+    loadOverdue();
+
+    /* --- Logout --- */
+    function handleLogout() {
+      clearAuth();
+      window.location.href = '/';
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

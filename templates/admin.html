@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bibliotek — Administration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a href="/" class="navbar-brand">
+          <span class="brand-icon">📚</span>
+          Bibliotek
+        </a>
+        <button class="hamburger" aria-label="Meny" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links" id="navLinks">
+          {% if user %}
+          <li><a href="/books">Böcker</a></li>
+          <li><a href="/loans">Mina lån</a></li>
+          <li><a href="/admin">Admin</a></li>
+          <li>
+            <span class="user-badge">
+              <span>{{ user.username }}</span>
+              <span class="role-tag">{{ user.role }}</span>
+            </span>
+          </li>
+          <li>
+            <button onclick="handleLogout()">Logga ut</button>
+          </li>
+          {% else %}
+          <li><a href="/login">Logga in</a></li>
+          <li><a href="/register">Skapa konto</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Admin dashboard -->
+    <main>
+      <h1 style="font-family:var(--font-serif);font-size:1.5rem;margin-bottom:1.5rem;">Administration</h1>
+
+      <!-- Stats cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statBooks">—</div>
+          <div class="stat-label">Böcker</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statUsers">—</div>
+          <div class="stat-label">Användare</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statActiveLoans">—</div>
+          <div class="stat-label">Aktiva lån</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statOverdue" style="color:var(--clr-overdue);">—</div>
+          <div class="stat-label">Förfallna</div>
+        </div>
+      </div>
+
+      <!-- User management -->
+      <div class="admin-section">
+        <h2>Användarhantering</h2>
+        <div class="card" style="padding:0;overflow-x:auto;">
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>Användarnamn</th>
+                <th>E-post</th>
+                <th>Roll</th>
+                <th>Skapad</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="userLoading" class="empty-state">
+          <span class="spinner"></span>
+          <p>Laddar användare...</p>
+        </div>
+        <div id="userEmpty" class="empty-state" style="display:none;">
+          <div class="empty-icon">👤</div>
+          <p>Inga användare hittades.</p>
+        </div>
+      </div>
+
+      <!-- HCF categories -->
+      <div class="admin-section">
+        <h2>HCF-kategorier</h2>
+        <div class="card">
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>Kod</th>
+                <th>Namn</th>
+                <th>Åldersspann</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>hcf</code></td>
+                <td>Huvudkategoriför 0–8</td>
+                <td>0–8 år</td>
+              </tr>
+              <tr>
+                <td><code>hcg</code></td>
+                <td>Huvudkategoriför ungdom</td>
+                <td>9–12 år</td>
+              </tr>
+              <tr>
+                <td><code>hcb</code></td>
+                <td>Huvudkategoriför barn/tonår</td>
+                <td>13–17 år</td>
+              </tr>
+              <tr>
+                <td><code>adult</code></td>
+                <td>Adult</td>
+                <td>18+ år</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Bibliotek &copy; {{ year if year else "2025" }}. Byggt med ❤️ i Sverige.</p>
+    </footer>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+
+    if (!isLoggedIn()) {
+      window.location.href = '/login';
+    }
+
+    if (!isAdmin()) {
+      toast('Endast administratörer kan se denna sida.', 'error');
+      setTimeout(() => {
+        window.location.href = '/books';
+      }, 2000);
+    }
+
+    /* --- Load system stats --- */
+    async function loadStats() {
+      try {
+        const books = await api('/api/books?limit=1');
+        document.getElementById('statBooks').textContent = books.total || 0;
+      } catch (err) {
+        document.getElementById('statBooks').textContent = '—';
+      }
+
+      try {
+        const loans = await api('/api/loans/active');
+        document.getElementById('statActiveLoans').textContent = loans.length;
+      } catch (err) {
+        document.getElementById('statActiveLoans').textContent = '—';
+      }
+
+      try {
+        const overdue = await api('/api/loans/overdue');
+        document.getElementById('statOverdue').textContent = overdue.length;
+      } catch (err) {
+        document.getElementById('statOverdue').textContent = '—';
+      }
+
+      /* User count — approximate from loans endpoint */
+      document.getElementById('statUsers').textContent = '—';
+    }
+
+    /* --- Load users --- */
+    async function loadUsers() {
+      const tbody = document.getElementById('userTableBody');
+      const loading = document.getElementById('userLoading');
+      const empty = document.getElementById('userEmpty');
+
+      loading.style.display = 'block';
+      tbody.innerHTML = '';
+      empty.style.display = 'none';
+
+      /* Note: User listing endpoint needs to be implemented in backend.
+         This gracefully degrades if /api/users is not yet available. */
+      try {
+        /* Attempt to load users via a GET endpoint on /api/users */
+        const users = await api('/api/users');
+        if (users.length === 0) {
+          empty.style.display = 'block';
+          loading.style.display = 'none';
+          return;
+        }
+
+        users.forEach(u => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${escapeHtml(u.username)}</td>
+            <td>${escapeHtml(u.email || '—')}</td>
+            <td><span class="badge badge-available">${escapeHtml(u.role || 'user')}</span></td>
+            <td>${formatDate(u.created_at)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        loading.style.display = 'none';
+      } catch (err) {
+        /* User listing not yet implemented — show current user info */
+        loading.style.display = 'none';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(APP.user.username)}</td>
+          <td>${escapeHtml(APP.user.email || '—')}</td>
+          <td><span class="badge badge-available">${escapeHtml(APP.user.role)}</span></td>
+          <td>—</td>
+        `;
+        tbody.appendChild(tr);
+
+        const infoRow = document.createElement('tr');
+        infoRow.innerHTML = `<td colspan="4"><p class="card-subtitle" style="padding:.5rem;">Användarhantering: /api/users måste implementeras för att visa alla användare.</p></td>`;
+        tbody.appendChild(infoRow);
+      }
+    }
+
+    /* --- Load everything --- */
+    loadStats();
+    loadUsers();
+
+    /* --- Logout --- */
+    function handleLogout() {
+      clearAuth();
+      window.location.href = '/';
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

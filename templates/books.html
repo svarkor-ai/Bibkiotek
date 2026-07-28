@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bibliotek — Böcker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a href="/" class="navbar-brand">
+          <span class="brand-icon">📚</span>
+          Bibliotek
+        </a>
+        <button class="hamburger" aria-label="Meny" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links" id="navLinks">
+          {% if user %}
+          <li><a href="/books">Böcker</a></li>
+          <li><a href="/loans">Mina lån</a></li>
+          {% if is_admin %}
+          <li><a href="/admin">Admin</a></li>
+          {% endif %}
+          <li>
+            <span class="user-badge">
+              <span>{{ user.username }}</span>
+              <span class="role-tag">{{ user.role }}</span>
+            </span>
+          </li>
+          <li>
+            <button onclick="handleLogout()">Logga ut</button>
+          </li>
+          {% else %}
+          <li><a href="/login">Logga in</a></li>
+          <li><a href="/register">Skapa konto</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Books page -->
+    <main>
+      <div class="flex justify-between items-center mb-2 flex-wrap gap-1">
+        <h1 style="font-family:var(--font-serif);font-size:1.5rem;">Böcker</h1>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary btn-sm" onclick="openScannerModal()">
+            📷 Skanna
+          </button>
+          {% if is_librarian %}
+          <button class="btn btn-primary btn-sm" onclick="openAddBookModal()">
+            + Lägg till bok
+          </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Search bar -->
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Sök efter titel, författare eller ISBN..."
+               onkeydown="if(event.key==='Enter') searchBooks()">
+        <button class="btn btn-primary" onclick="searchBooks()">Sök</button>
+      </div>
+
+      <!-- HCF filter -->
+      <div class="filter-bar">
+        <label for="hcfFilter" style="font-size:.85rem;font-weight:600;">Kategorifilter:</label>
+        <select id="hcfFilter" onchange="filterByHcf()">
+          <option value="">Alla kategorier</option>
+          <option value="hcf">HCF</option>
+          <option value="hcg">HCG</option>
+          <option value="hcb">HCB</option>
+          <option value="adult">Adult</option>
+        </select>
+      </div>
+
+      <!-- Results info -->
+      <p id="resultsInfo" class="card-subtitle mb-1"></p>
+
+      <!-- Book grid -->
+      <div id="bookGrid" class="book-grid">
+        <!-- Books loaded via JS -->
+      </div>
+
+      <!-- Loading / empty states -->
+      <div id="loadingState" class="empty-state" style="display:none;">
+        <span class="spinner"></span>
+        <p>Laddar böcker...</p>
+      </div>
+
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="empty-icon">📚</div>
+        <p>Inga böcker hittades.</p>
+      </div>
+    </main>
+
+    <!-- Scanner modal -->
+    <div class="modal-overlay" id="scannerModal">
+      <div class="modal">
+        <div class="flex justify-between items-center mb-2">
+          <h3>Skanna streckkod</h3>
+          <button class="btn btn-secondary btn-sm" onclick="closeScannerModal()">✕ Stäng</button>
+        </div>
+        <p class="card-subtitle mb-2">Håll koden inom ramverket.</p>
+        <div id="scanner-container"></div>
+      </div>
+    </div>
+
+    <!-- Add book modal -->
+    <div class="modal-overlay" id="addBookModal">
+      <div class="modal">
+        <div class="flex justify-between items-center mb-2">
+          <h3>Lägg till ny bok</h3>
+          <button class="btn btn-secondary btn-sm" onclick="closeAddBookModal()">✕ Stäng</button>
+        </div>
+        <form id="addBookForm">
+          <div class="form-group">
+            <label for="bookIsbn">ISBN</label>
+            <input type="text" id="bookIsbn" name="isbn" placeholder="978..." required>
+          </div>
+          <div class="form-group">
+            <label for="bookTitle">Titel</label>
+            <input type="text" id="bookTitle" name="title" placeholder="Bokens titel" required>
+          </div>
+          <div class="form-group">
+            <label for="bookAuthor">Författare</label>
+            <input type="text" id="bookAuthor" name="author" placeholder="Författarens namn">
+          </div>
+          <div class="form-group">
+            <label for="bookPublisher">Förlag</label>
+            <input type="text" id="bookPublisher" name="publisher" placeholder="Förlag">
+          </div>
+          <div class="form-group">
+            <label for="bookYear">År</label>
+            <input type="number" id="bookYear" name="year" placeholder="Utgivningsår" min="1000" max="2100">
+          </div>
+          <div class="form-group">
+            <label for="bookHcf">HCF-kategori</label>
+            <select id="bookHcf" name="hcf_category">
+              <option value="">Automatisk</option>
+              <option value="hcf">HCF</option>
+              <option value="hcg">HCG</option>
+              <option value="hcb">HCB</option>
+              <option value="adult">Adult</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-full" id="addBookBtn">Lägg till bok</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Bibliotek &copy; {{ year if year else "2025" }}. Byggt med ❤️ i Sverige.</p>
+    </footer>
+  </div>
+
+  <!-- html5-qrcode CDN -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+
+    let currentPage = 1;
+    let currentHcf = '';
+    let currentSearch = '';
+
+    /* --- Load books on page load --- */
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!isLoggedIn()) {
+        window.location.href = '/login';
+        return;
+      }
+      loadBooks();
+    });
+
+    /* --- Load books --- */
+    async function loadBooks() {
+      const grid = document.getElementById('bookGrid');
+      const loading = document.getElementById('loadingState');
+      const empty = document.getElementById('emptyState');
+      const info = document.getElementById('resultsInfo');
+
+      grid.innerHTML = '';
+      loading.style.display = 'block';
+      empty.style.display = 'none';
+      info.textContent = '';
+
+      let url = `/api/books?limit=20&offset=${(currentPage - 1) * 20}`;
+      if (currentHcf) url += `&hcf_category=${encodeURIComponent(currentHcf)}`;
+
+      try {
+        const data = await api(url);
+        const books = data.items || [];
+        const total = data.total || 0;
+
+        loading.style.display = 'none';
+
+        if (books.length === 0) {
+          empty.style.display = 'block';
+          info.textContent = '0 av ' + total + ' böcker';
+          return;
+        }
+
+        info.textContent = `${books.length} av ${total} böcker`;
+
+        books.forEach(book => {
+          grid.appendChild(createBookCard(book));
+        });
+      } catch (err) {
+        loading.style.display = 'none';
+        toast('Kunde inte läsa böcker: ' + err.message, 'error');
+      }
+    }
+
+    /* --- Create book card element --- */
+    function createBookCard(book) {
+      const card = document.createElement('div');
+      card.className = 'book-card';
+      card.onclick = () => navigateTo(`/books/${book.id}`);
+
+      const coverHtml = book.cover_url
+        ? `<img src="${book.cover_url}" alt="${book.title}" loading="lazy">`
+        : `<span class="placeholder">📖</span>`;
+
+      const hcfBadge = book.hcf_category
+        ? `<span class="badge badge-available">${hcfLabel(book.hcf_category)}</span>`
+        : '';
+
+      const authorText = book.author ? ` av ${book.author}` : '';
+      const yearText = book.year ? ` (${book.year})` : '';
+
+      card.innerHTML = `
+        <div class="book-card-cover">${coverHtml}</div>
+        <div class="card-title">${escapeHtml(book.title || 'Okänd titel')}</div>
+        <div class="book-card-author">${escapeHtml(authorText)}${yearText}</div>
+        <div class="flex gap-1 items-center mt-1">${hcfBadge}</div>
+      `;
+      return card;
+    }
+
+    /* --- Search books --- */
+    async function searchBooks() {
+      const q = document.getElementById('searchInput').value.trim();
+      if (!q) {
+        currentSearch = '';
+        currentPage = 1;
+        loadBooks();
+        return;
+      }
+
+      currentSearch = q;
+      currentPage = 1;
+      const grid = document.getElementById('bookGrid');
+      const loading = document.getElementById('loadingState');
+      const empty = document.getElementById('emptyState');
+      const info = document.getElementById('resultsInfo');
+
+      grid.innerHTML = '';
+      loading.style.display = 'block';
+      empty.style.display = 'none';
+
+      try {
+        const data = await api(`/api/books/search?q=${encodeURIComponent(q)}`);
+        const books = data.items || [];
+        const total = data.total || 0;
+
+        loading.style.display = 'none';
+        info.textContent = `Sökresultat: ${books.length} av ${total} för "${q}"`;
+
+        if (books.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        books.forEach(book => {
+          grid.appendChild(createBookCard(book));
+        });
+      } catch (err) {
+        loading.style.display = 'none';
+        toast('Sökning misslyckades: ' + err.message, 'error');
+      }
+    }
+
+    /* --- Filter by HCF --- */
+    function filterByHcf() {
+      currentHcf = document.getElementById('hcfFilter').value;
+      currentPage = 1;
+      loadBooks();
+    }
+
+    /* --- Scanner modal --- */
+    function openScannerModal() {
+      openModal(document.getElementById('scannerModal'));
+      startScanner('scanner-container', (barcode) => {
+        toast(`Streckkod läst: ${barcode}`, 'success');
+        /* Navigate to book detail or add */
+        window.location.href = `/books?barcode=${encodeURIComponent(barcode)}`;
+      });
+    }
+
+    function closeScannerModal() {
+      stopScanner();
+      closeModal(document.getElementById('scannerModal'));
+    }
+
+    /* --- Add book modal --- */
+    function openAddBookModal() {
+      openModal(document.getElementById('addBookModal'));
+    }
+
+    function closeAddBookModal() {
+      closeModal(document.getElementById('addBookModal'));
+      document.getElementById('addBookForm').reset();
+    }
+
+    document.getElementById('addBookForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('addBookBtn');
+      const form = e.target;
+      const data = serializeForm(form);
+      data.user_id = APP.user.id;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Lägger till...';
+
+      try {
+        const book = await api('/api/books', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        });
+        toast(`Boken "${book.title}" har lagts till!`, 'success');
+        closeAddBookModal();
+        loadBooks();
+      } catch (err) {
+        toast('Misslyckades: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Lägg till bok';
+      }
+    });
+
+    /* --- Logout --- */
+    function handleLogout() {
+      clearAuth();
+      toast('Du har loggats ut.', 'info');
+      window.location.href = '/';
+    }
+
+    /* --- Escape HTML --- */
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
