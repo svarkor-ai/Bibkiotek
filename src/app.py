@@ -61,7 +61,10 @@ async def home(request: Request) -> dict:
     """Render the home page (index.html)."""
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "year": datetime.now(timezone.utc).year},
+        context={
+            "request": request,
+            "year": datetime.now(timezone.utc).year,
+        },
     )
 
 

@@ -112,7 +112,8 @@ def require_role(allowed_roles: list[str]):
 # Login endpoint stub
 # ---------------------------------------------------------------------------
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from src.database import get_session
@@ -121,15 +122,19 @@ from src.models import User
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 @router.post("/login")
-async def login(
-    username: str,
-    password: str,
+def login(
+    body: LoginRequest = Body(...),
     db: Session = Depends(get_session),
 ):
     """Authenticate *username*/*password* against the User table."""
-    user = db.query(User).filter(User.username == username).first()
-    if user is None or not check_password(password, user.password_hash):
+    user = db.query(User).filter(User.username == body.username).first()
+    if user is None or not check_password(body.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Ogiltiga användaruppgifter",
