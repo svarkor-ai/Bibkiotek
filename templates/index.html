@@ -4,17 +4,20 @@
 {% block content %}
 <section class="hero">
   <h1>Utforska 100 000 böcker</h1>
-  <p>Sök bland barnböcker, ungdomslitteratur och vuxenlitteratur — allt i en och samma katalog.</p>
+  <p>Sök bland 100 000 svenska böcker — allt i en och samma katalog.</p>
   <form action="/catalog" method="get" style="max-width:500px; margin:1.5rem auto 0">
     <div class="search-bar">
       <input type="text" name="q" placeholder="Sök titel, författare..." autofocus>
       <button type="submit" class="btn btn-primary">Sök</button>
     </div>
   </form>
-  <div style="margin-top:1rem">
-    <a href="/catalog?category=vuxen" class="btn btn-secondary">Barnböcker</a>
-    <a href="/catalog?category=unga" class="btn btn-secondary">Ungdomsböcker</a>
-    <a href="/catalog?category=vuxen" class="btn btn-secondary">Vuxenböcker</a>
+  <div style="margin-top:1.5rem; text-align:center">
+    <h3 style="font-family:var(--font-serif);color:var(--clr-primary);margin-bottom:.75rem">Populära kategorier</h3>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;max-width:600px;margin:0 auto">
+      {% for cat in popular_categories %}
+      <a href="/catalog?category={{ cat.name }}" class="btn btn-secondary" style="font-size:.85rem">{{ cat.name }} ({{ cat.count }})</a>
+      {% endfor %}
+    </div>
   </div>
 </section>
 
