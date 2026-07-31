@@ -1,0 +1,6 @@
+T5: Users + app wiring + startup — VERIFIED
+- User CRUD (register with JSON Body, 200 OK)
+- RegisterRequest Pydantic model (fixed from 422 query-param bug)
+- FastAPI app with router mounting, static files, template routes
+- 5 HTML pages: /login, /register, /books, /admin, /loans — all 200
+- Evidence: src/users.py, src/app.py, live endpoints verified

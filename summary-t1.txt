@@ -1,0 +1,5 @@
+T1: Database models + session — VERIFIED
+- SQLAlchemy models: User, Book, Loan, HcfCategory
+- Session factory working, database file created
+- 102/102 tests pass
+- Evidence: src/database.py, src/models.py exist and are importable

@@ -1,247 +1,134 @@
-<!DOCTYPE html>
-<html lang="sv">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bibliotek — {{ book.title if book else "Bok" }}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-  <div class="page-wrapper">
+{% extends "base.html" %}
+{% block title %}{{ book.title[:60] }}{% if book.title|length > 60 %}...{% endif %} — Bibliotek{% endblock %}
 
-    <!-- Navbar -->
-    <nav class="navbar">
-      <div class="navbar-inner">
-        <a href="/" class="navbar-brand">
-          <span class="brand-icon">📚</span>
-          Bibliotek
-        </a>
-        <button class="hamburger" aria-label="Meny" onclick="toggleMenu()">
-          <span></span><span></span><span></span>
-        </button>
-        <ul class="nav-links" id="navLinks">
-          {% if user %}
-          <li><a href="/books">Böcker</a></li>
-          <li><a href="/loans">Mina lån</a></li>
-          {% if is_admin %}
-          <li><a href="/admin">Admin</a></li>
-          {% endif %}
-          <li>
-            <span class="user-badge">
-              <span>{{ user.username }}</span>
-              <span class="role-tag">{{ user.role }}</span>
-            </span>
-          </li>
-          <li>
-            <button onclick="handleLogout()">Logga ut</button>
-          </li>
-          {% else %}
-          <li><a href="/login">Logga in</a></li>
-          <li><a href="/register">Skapa konto</a></li>
-          {% endif %}
-        </ul>
-      </div>
-    </nav>
+{% block content %}
+<a href="/catalog" style="display:inline-flex;align-items:center;gap:.4rem;margin-bottom:1.5rem;color:var(--clr-text-muted)">
+  ← Tillbaka till katalogen
+</a>
 
-    <!-- Book detail -->
-    <main>
-      {% if book %}
-      <a href="/books" class="btn btn-secondary btn-sm mb-2">← Tillbaka till böcker</a>
-
-      <div class="card">
-        <div class="flex" style="gap:1.5rem;flex-wrap:wrap;">
-          <!-- Cover -->
-          <div>
-            <div class="book-detail-cover">
-              {% if book.cover_url %}
-              <img src="{{ book.cover_url }}" alt="{{ book.title }}">
-              {% else %}
-              <span style="font-size:3rem;">📖</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <!-- Info -->
-          <div style="flex:1;min-width:200px;">
-            <h1 style="font-family:var(--font-serif);font-size:1.5rem;margin-bottom:.25rem;">{{ book.title }}</h1>
-            {% if book.author %}
-            <p class="card-subtitle">av {{ book.author }}</p>
-            {% endif %}
-
-            <div class="flex gap-1 items-center mt-1" style="flex-wrap:wrap;">
-              {% if book.hcf_category %}
-              <span class="badge badge-available">{{ hcfLabel(book.hcf_category) }}</span>
-              {% endif %}
-              {% if book.isbn %}
-              <span class="badge badge-available" style="background:#f0f0f0;color:#555;">ISBN: {{ book.isbn }}</span>
-              {% endif %}
-            </div>
-
-            <dl class="book-detail-meta mt-2">
-              {% if book.publisher %}
-              <dt>Förlag</dt>
-              <dd>{{ book.publisher }}</dd>
-              {% endif %}
-              {% if book.year %}
-              <dt>År</dt>
-              <dd>{{ book.year }}</dd>
-              {% endif %}
-            </dl>
-
-            <!-- Status + Actions -->
-            <div class="mt-2">
-              {% if is_checked_out %}
-              <span class="badge badge-checked">Utlånad</span>
-              {% else %}
-              <span class="badge badge-available">Tillgänglig</span>
-              {% endif %}
-
-              {% if is_librarian and not is_checked_out %}
-              <button class="btn btn-primary btn-sm mt-1" onclick="checkoutBook({{ book.id }})">
-                📖 Låna ut
-              </button>
-              {% endif %}
-
-              {% if is_librarian and is_checked_out %}
-              <button class="btn btn-secondary btn-sm mt-1" onclick="returnBook({{ book.id }})">
-                ↩️ Returnera
-              </button>
-              {% endif %}
-
-              {% if is_user and not is_checked_out %}
-              <p class="card-subtitle mt-1">Logga in som bibliotekarie för att låna.</p>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Loan history -->
-      <div class="card mt-2">
-        <h2 style="font-size:1.1rem;margin-bottom:1rem;">Låneshistorik</h2>
-        {% if loan_history %}
-        <ul class="loan-list">
-          {% for loan in loan_history %}
-          <li class="loan-item {% if loan.return_date %}returned{% else %}active{% endif %}{% if not loan.return_date and loan.overdue %} overdue{% endif %}">
-            <div class="loan-book-title">{{ loan.book_title }}</div>
-            <div class="loan-info">
-              {% if loan.return_date %}
-                Utlånad: {{ formatDateTime(loan.checkout_date) }} &nbsp;|&nbsp; Returnerad: {{ formatDateTime(loan.return_date) }}
-              {% else %}
-                Utlånad: {{ formatDateTime(loan.checkout_date) }} &nbsp;|&nbsp; Förfaller: {{ formatDateTime(loan.due_date) }}
-                {% if loan.overdue %}
-                <span class="badge badge-overdue">SEN — {{ daysUntilDue(loan.due_date) }} dagar</span>
-                {% else %}
-                <span class="badge badge-checked">{{ daysUntilDue(loan.due_date) }} dagar kvar</span>
-                {% endif %}
-              {% endif %}
-            </div>
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <p>Ingen låneshistorik för denna bok.</p>
-        </div>
-        {% endif %}
-      </div>
-
-      {% else %}
-      <div class="empty-state" style="padding:4rem 1rem;">
-        <div class="empty-icon">📚</div>
-        <h2>Bok hittades inte</h2>
-        <p class="mt-1">Denna bok finns inte i bibliotekets katalog.</p>
-        <a href="/books" class="btn btn-primary mt-2">Tillbaka till böcker</a>
-      </div>
-      {% endif %}
-    </main>
-
-    <!-- Confirm return modal -->
-    <div class="modal-overlay" id="returnModal">
-      <div class="modal">
-        <h3>Bekräfta retur</h3>
-        <p class="mb-2">Vill du returnera denna bok?</p>
-        <div class="flex gap-1">
-          <button class="btn btn-danger" id="confirmReturnBtn">Ja, returnera</button>
-          <button class="btn btn-secondary" onclick="closeModal(document.getElementById('returnModal'))">Avbryt</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <p>Bibliotek &copy; {{ year if year else "2025" }}. Byggt med ❤️ i Sverige.</p>
-    </footer>
+<div style="display:flex;gap:2rem;flex-wrap:wrap">
+  <!-- Omslag -->
+  <div class="book-detail-cover">
+    {% if book.cover_url %}
+      <img src="{{ book.cover_url }}" alt="{{ book.title }}"
+           onerror="this.parentElement.innerHTML='<span class=\\'placeholder\\'>📖</span>'">
+    {% else %}
+      <span class="placeholder">📖</span>
+    {% endif %}
   </div>
 
-  <script>
-    function toggleMenu() {
-      document.getElementById('navLinks').classList.toggle('open');
-    }
+  <!-- Metadata -->
+  <div style="flex:1;min-width:280px">
+    <h1 style="font-family:var(--font-serif);color:var(--clr-primary);margin-bottom:.25rem">{{ book.title }}</h1>
+    <p style="font-size:1.1rem;color:var(--clr-text-muted);margin-bottom:1.5rem">
+      {{ book.author or 'Okänd författare' }}
+    </p>
 
-    if (!isLoggedIn()) {
-      window.location.href = '/login';
-    }
+    <dl class="book-detail-meta">
+      {% if book.isbn %}
+      <div>
+        <dt>ISBN</dt>
+        <dd>{{ book.isbn }}</dd>
+      </div>
+      {% endif %}
 
-    const bookId = {{ book.id if book else 'null' }};
+      {% if book.publisher %}
+      <div>
+        <dt>Förlag</dt>
+        <dd>{{ book.publisher }}</dd>
+      </div>
+      {% endif %}
 
-    /* --- Checkout book --- */
-    async function checkoutBook(id) {
-      if (!isLibrarian()) {
-        toast('Endast bibliotekarie/admin kan låna ut.', 'error');
-        return;
-      }
+      {% if book.hcf_category %}
+      <div>
+        <dt>HCF-kategori</dt>
+        <dd>
+          <span class="badge" style="background:var(--clr-primary);color:#fff">
+            {{ book.hcf_category }}
+          </span>
+        </dd>
+      </div>
+      {% endif %}
 
-      try {
-        const loan = await api('/api/loans/checkout', {
-          method: 'POST',
-          body: JSON.stringify({
-            book_id: id,
-            user_id: 1, /* TODO: select borrower */
-            librarian_id: APP.user.id,
-          }),
-        });
-        toast('Boken har lånats ut!', 'success');
-        window.location.reload();
-      } catch (err) {
-        toast('Låning misslyckades: ' + err.message, 'error');
-      }
-    }
+      {% if book.language %}
+      <div>
+        <dt>Språk</dt>
+        <dd>{{ book.language|upper }}</dd>
+      </div>
+      {% endif %}
 
-    /* --- Return book --- */
-    function returnBook(id) {
-      openModal(document.getElementById('returnModal'));
-      document.getElementById('confirmReturnBtn').onclick = async () => {
-        closeModal(document.getElementById('returnModal'));
-        try {
-          /* Find the active loan for this book */
-          const loans = await api(`/api/loans/user/${APP.user.id}`);
-          const activeLoan = loans.find(l => l.book_id === id && !l.return_date);
-          if (!activeLoan) {
-            toast('Inget aktivt lån hittades för denna bok.', 'error');
-            return;
-          }
-          const returned = await api('/api/loans/return', {
-            method: 'POST',
-            body: JSON.stringify({ loan_id: activeLoan.id }),
-          });
-          toast('Boken har returnerats!', 'success');
-          window.location.reload();
-        } catch (err) {
-          toast('Retur misslyckades: ' + err.message, 'error');
-        }
-      };
-    }
+      {% if book.dewey_number %}
+      <div>
+        <dt>DDC-nummer</dt>
+        <dd>{{ book.dewey_number }}</dd>
+      </div>
+      {% endif %}
 
-    /* --- Logout --- */
-    function handleLogout() {
-      clearAuth();
-      window.location.href = '/';
-    }
-  </script>
-</body>
-</html>
+      {% if book.sab_signum %}
+      <div>
+        <dt>SAB-signum</dt>
+        <dd>{{ book.sab_signum }}</dd>
+      </div>
+      {% endif %}
+
+      {% if book.subjects %}
+      <div>
+        <dt>Ämnen</dt>
+        <dd>
+          {% for subj in book.subjects[:5] %}
+            <span class="badge" style="background:#e0e7ff;color:#3730a3;margin:.15rem .1rem 0 .15rem">{{ subj }}</span>
+          {% endfor %}
+        </dd>
+      </div>
+      {% endif %}
+
+      {% if book.source %}
+      <div>
+        <dt>Källa</dt>
+        <dd>{{ book.source }}</dd>
+      </div>
+      {% endif %}
+
+      {% if book.created_at %}
+      <div>
+        <dt>Skapad</dt>
+        <dd>{{ book.created_at.strftime('%Y-%m-%d') if book.created_at else '—' }}</dd>
+      </div>
+      {% endif %}
+    </dl>
+
+    <!-- Lån-knapp (endast för inloggade) -->
+    {% if current_user and not has_active_loan %}
+    <div style="margin-top:1.5rem;display:flex;gap:.5rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="checkoutBook({{ book.id }})">
+        📕 Lån
+      </button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function checkoutBook(bookId) {
+  try {
+    const res = await fetch('/api/loans/checkout', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${APP.token}`},
+      body: JSON.stringify({
+        book_id: bookId,
+        user_id: APP.user.id,
+        librarian_id: APP.user.id
+      })
+    });
+    if (!res.ok) throw new Error('Kunde inte låna boken');
+    toast('Boken är nu lånad! 📕', 'success');
+    setTimeout(() => location.reload(), 1500);
+  } catch (e) {
+    toast('Fel vid utlåning: ' + e.message, 'error');
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+=== T6: Frontend templates + static files - Evidence ===
+Date: 2026-07-28
+Result: HTML templates and static assets for UI
+
+Files created:
+- templates/login.html — login page
+- templates/register.html — registration page
+- templates/books.html — books list page
+- templates/admin.html — admin panel
+- templates/loans.html — loans management
+- templates/base.html — base template
+- static/css/style.css — styles
+- static/js/app.js — JavaScript
+
+Verified:
+- All 5 pages accessible at /login, /register, /books, /admin, /loans — HTTP 200
+- Static files served correctly
+- Template routes use TemplateResponse with request as first argument (fixed)
+- 102/102 tests pass
+- VERIFY_EXIT=0
+VERIFY_EXIT=0

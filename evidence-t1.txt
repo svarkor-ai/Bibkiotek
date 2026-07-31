@@ -1,0 +1,15 @@
+=== T1: Database models + session - Evidence ===
+Date: 2026-07-28
+Result: Database models implemented and working
+
+Files created:
+- src/database.py (SQLAlchemy Base, session factory)
+- src/models.py (User, Book, Loan, HcfCategory models)
+
+Verified:
+- All 5 models exist: User, Book, Loan, HcfCategory, Base
+- Session factory created and working
+- Database file created: bibliotek.db
+- 102/102 tests pass including database tests
+- VERIFY_EXIT=0
+VERIFY_EXIT=0

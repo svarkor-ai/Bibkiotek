@@ -1,0 +1,6 @@
+T7: Tests + E2E verification — VERIFIED
+- 102/102 pytest tests passing (verified this session)
+- Covers auth, books, circulation, users, app, models, integration
+- Live API endpoint verification: register, books CRUD, validation errors
+- All endpoints tested for correct HTTP status codes
+- Evidence: tests/ directory, 7 test files, 102/102 pass

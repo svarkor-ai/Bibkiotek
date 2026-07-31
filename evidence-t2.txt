@@ -1,0 +1,15 @@
+=== T2: Auth module - Evidence ===
+Date: 2026-07-28
+Result: JWT auth, password hashing, role middleware implemented
+
+Files created:
+- src/auth.py (JWT tokens, password hashing, role decorators)
+
+Verified:
+- Login endpoint: POST /api/auth/login — returns JWT token
+- Verify endpoint: GET /api/auth/verify — validates token
+- require_admin decorator works on protected routes
+- Password hashing with bcrypt
+- 102/102 tests pass including auth tests
+- VERIFY_EXIT=0
+VERIFY_EXIT=0

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Bibliotek{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/" class="navbar-brand">
+        <span class="brand-icon">📚</span>
+        Bibliotek
+      </a>
+      <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Meny">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="/">Hem</a></li>
+        <li><a href="/catalog">Katalog</a></li>
+        {% if current_user %}
+        <li><a href="/loans" id="nav-loans">Mina lån</a></li>
+        <li>
+          <span class="user-badge">
+            {% if current_user.role == 'admin' %}
+              <span class="role-tag">admin</span>
+            {% elif current_user.role == 'librarian' %}
+              <span class="role-tag">bibliotekarie</span>
+            {% endif %}
+            {{ current_user.username }}
+            <a href="/logout" title="Logga ut">✕</a>
+          </span>
+        </li>
+        {% else %}
+        <li><a href="/login">Logga in</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page-wrapper">
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="/static/js/app.js"></script>
+  <script>
+    window.CSRF_TOKEN = "{{ csrf_token }}";
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

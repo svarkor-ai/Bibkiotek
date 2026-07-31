@@ -1,0 +1,17 @@
+=== T4: Circulation + 28-day rules - Evidence ===
+Date: 2026-07-28
+Result: Checkout/return with 28-day due date and overdue tracking
+
+Files created:
+- src/circulation.py (Loan CRUD, 28-day rules, overdue detection)
+
+Verified:
+- POST /api/loans/checkout — creates loan
+- POST /api/loans/return — processes return
+- GET /api/loans/active — lists active loans
+- GET /api/loans/overdue — lists overdue loans
+- GET /api/loans/user/{user_id} — user's loans
+- 28-day due date calculation implemented
+- 102/102 tests pass including circulation tests
+- VERIFY_EXIT=0
+VERIFY_EXIT=0

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Katalog — Bibliotek{% endblock %}
+
+{% block content %}
+<h1 style="font-family:var(--font-serif);color:var(--clr-primary);margin-bottom:.25rem">Bokkatalog</h1>
+<p style="color:var(--clr-text-muted);margin-bottom:1rem">{{ total }} böcker — sida {{ page }}/{{ pages }}</p>
+
+<!-- Sök -->
+<form action="/catalog" method="get" style="margin-bottom:1rem">
+  <div class="search-bar">
+    <input type="text" name="q" placeholder="Sök titel, författare..." value="{{ q or '' }}" style="flex:1">
+    <button type="submit" class="btn btn-primary">Sök</button>
+    {% if q or category or language %}
+    <a href="/catalog" class="btn btn-secondary">Rensa</a>
+    {% endif %}
+  </div>
+</form>
+
+<!-- Filter -->
+<div class="filter-bar">
+  <select onchange="applyFilter('category', this.value)" aria-label="Kategori">
+    <option value="">Alla kategorier</option>
+    <option value="barn" {% if category=='barn' %}selected{% endif %}>🧒 Barn</option>
+    <option value="unga" {% if category=='unga' %}selected{% endif %}>👦 Unga</option>
+    <option value="vuxen" {% if category=='vuxen' %}selected{% endif %}>🧑 Vuxen</option>
+  </select>
+  <select onchange="applyFilter('language', this.value)" aria-label="Språk">
+    <option value="">Alla språk</option>
+    {% for lang in available_languages %}
+    <option value="{{ lang }}" {% if language==lang %}selected{% endif %}>
+      {{ lang|upper }}
+    </option>
+    {% endfor %}
+  </select>
+  <select onchange="applyFilter('sab', this.value)" aria-label="SAB-signum">
+    <option value="">Alla SAB-signum</option>
+    {% for s in available_sab %}
+    <option value="{{ s }}" {% if sab==s %}selected{% endif %}>
+      {{ s }}
+    </option>
+    {% endfor %}
+  </select>
+  <select onchange="applyFilter('dewey', this.value)" aria-label="DDC-nummer">
+    <option value="">Alla DDC-nummer</option>
+    {% for d in available_dewey %}
+    <option value="{{ d }}" {% if dewey==d %}selected{% endif %}>
+      {{ d }}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+
+<!-- Bokgalleri -->
+{% if items %}
+<div class="book-grid">
+  {% for book in items %}
+  <a href="/books/{{ book.id }}" class="book-card">
+    <div class="book-card-cover">
+      {% if book.cover_url %}
+        <img src="{{ book.cover_url }}" alt="{{ book.title }}" loading="lazy"
+             onerror="this.parentElement.innerHTML='<span class=\\'placeholder\\'>📖</span>'">
+      {% else %}
+        <span class="placeholder">📖</span>
+      {% endif %}
+    </div>
+    <div class="book-card-title">{{ book.title[:60] }}{% if book.title|length > 60 %}...{% endif %}</div>
+    <div class="book-card-author">{{ book.author or 'Okänd' }}</div>
+    {% if book.hcf_category %}
+    <span class="badge" style="margin-top:.4rem;background:var(--clr-primary);color:#fff">
+      {{ book.hcf_category }}
+    </span>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Paginering -->
+<div style="display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:2rem;flex-wrap:wrap">
+   <a href="?page={{ page - 1 }}{% if q %}&q={{ q }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if language %}&language={{ language }}{% endif %}{% if sab %}&sab={{ sab }}{% endif %}{% if dewey %}&dewey={{ dewey }}{% endif %}"
+     class="btn btn-secondary"
+     {% if page <= 1 %}style="opacity:.4;pointer-events:none"{% endif %}>← Föregående</a>
+
+  <span style="font-size:.9rem;color:var(--clr-text-muted)">
+    Sida {{ page }} av {{ pages }}
+  </span>
+
+  <a href="?page={{ page + 1 }}{% if q %}&q={{ q }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if language %}&language={{ language }}{% endif %}{% if sab %}&sab={{ sab }}{% endif %}{% if dewey %}&dewey={{ dewey }}{% endif %}"
+     class="btn btn-primary"
+     {% if page >= pages %}style="opacity:.4;pointer-events:none"{% endif %}>Nästa →</a>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:3rem">
+  <p style="font-size:3rem;margin-bottom:1rem">🔍</p>
+  <h3>Inga träffar</h3>
+  <p style="color:var(--clr-text-muted)">Prova med andra sökord eller rensa filtren.</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function applyFilter(name, value) {
+  const url = new URL(window.location);
+  if (value) {
+    url.searchParams.set(name, value);
+  } else {
+    url.searchParams.delete(name);
+  }
+  url.searchParams.set('page', '1');
+  window.location = url.toString();
+}
+</script>
+{% endblock %}

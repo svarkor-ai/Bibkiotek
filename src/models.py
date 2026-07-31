@@ -61,15 +61,20 @@ class Book(Base):
     __tablename__ = "books"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    isbn: Mapped[str | None] = mapped_column(String(13), unique=True, nullable=True)
+    isbn: Mapped[str | None] = mapped_column(String(500), nullable=True)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
-    author: Mapped[str] = mapped_column(String(255), nullable=True)
-    publisher: Mapped[str] = mapped_column(String(255), nullable=True)
+    author: Mapped[str] = mapped_column(String(500), nullable=True)
+    publisher: Mapped[str] = mapped_column(String(500), nullable=True)
     year: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cover_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     hcf_category: Mapped[str | None] = mapped_column(
         String(20), nullable=True
     )
+    dewey_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    sab_signum: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    subjects: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    languages: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    source: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )

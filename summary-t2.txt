@@ -1,0 +1,5 @@
+T2: Auth module — VERIFIED
+- JWT auth, password hashing (bcrypt), role decorators (require_admin, require_role)
+- Login/verify endpoints working
+- 102/102 tests pass including auth tests
+- Evidence: src/auth.py, endpoints tested live

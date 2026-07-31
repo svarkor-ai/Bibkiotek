@@ -1,0 +1,23 @@
+=== T8: Deploy Bibkiotek on port 8140 - Evidence ===
+Date: 2026-07-28
+Result: App deployed and running on localhost:8140
+
+Server status:
+- PID running on port 8140
+- GET / → 200 (OK)
+- GET /login → 200
+- GET /register → 200
+- GET /books → 200
+- GET /admin → 200
+- GET /loans → 200
+- GET /docs → 200 (Swagger API docs)
+- POST /api/users/register (JSON) → 200 with user object
+- POST /api/books (valid) → 200 with book object
+- POST /api/books (missing isbn) → 422 with validation error
+- GET /api/books → 200 with 4 books
+
+Tests: 102/102 passing
+All 9 source files implemented (database, models, auth, books, circulation, users, app, config)
+7 HTML templates, 2 static files
+GitHub: github.com/svarkor-ai/Bibkiotek
+VERIFY_EXIT=0

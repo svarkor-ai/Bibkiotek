@@ -6,17 +6,18 @@
 
 ## Modules
 
-| Module | Concern | Status |
-|---|---|---|
-| PLAN.md | Modular plan from Planner | planned |
-| DESIGN.md | Data model, interface contracts | planned |
-| src/database.py | SQLAlchemy models + session | planned |
-| src/models.py | Pydantic schemas (requests/responses) | planned |
-| src/auth.py | JWT auth, password hashing, role middleware | planned |
-| src/books.py | Book CRUD + ISBN/EAN lookup + HCF API | planned |
-| src/circulation.py | Checkout/return, 28-day due date, overdue | planned |
-| src/users.py | User management (librarian CRUD) | planned |
-| src/app.py | FastAPI app, routers, static files | planned |
-| templates/ | HTML templates (Jinja2) | planned |
-| static/ | CSS/JS (camera scanner) | planned |
-| tests/ | Unit + E2E tests | planned |
+|| Module | Concern | Status |
+||---|---|---|
+|| PLAN.md | Modular plan from Planner | ✅ done (job 15) |
+|| DESIGN.md | Data model, interface contracts | ✅ done |
+|| src/database.py | SQLAlchemy models + session | ✅ done + verified (job 17) |
+|| src/models.py | Pydantic schemas (requests/responses) | ✅ done + verified |
+|| src/auth.py | JWT auth, password hashing, role middleware | ✅ done + verified (job 18) |
+|| src/books.py | Book CRUD + ISBN/EAN lookup + HCF API | ✅ done + verified (job 19) |
+|| src/circulation.py | Checkout/return, 28-day due date, overdue | ✅ done + verified (job 20) |
+|| src/users.py | User management (librarian CRUD) | ✅ done + verified (job 21) |
+|| src/app.py | FastAPI app, routers, static files | ✅ done + verified (job 21) |
+|| templates/ | HTML templates (Jinja2) | ✅ done + verified (job 22) |
+|| static/ | CSS/JS (camera scanner) | ✅ done + verified (job 22) |
+|| tests/ | Unit + E2E tests | ✅ done + verified (job 23) |
+| **Server** | **Live on port 8140** | **✅ deployed (job 24)** |

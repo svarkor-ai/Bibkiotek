@@ -1,0 +1,23 @@
+=== Evidence: app.js loading fix for login/register ===
+Date: 2026-07-29
+
+Changes:
+- templates/register.html: added <script src="/static/js/app.js" defer></script>
+- templates/login.html: added <script src="/static/js/app.js" defer></script>
+
+Before fix: toast() and setAuth() undefined, forms submitted but no feedback/no redirect.
+After fix: JS loads, form submit works, toast notifications appear, redirect works.
+
+Verification (2026-07-29 browser test):
+1. Navigated to /register via browser tool
+2. Filled form: username=nyanv29, email=nyan@example.com, password=test12345
+3. Clicked "Skapa konto" → dispatchEvent(submit) triggered
+4. Server log: POST /api/users/register → 200 OK
+5. Automatic redirect to /login (GET /login → 200 OK)
+6. Entered login form: username=nyanv29, password=test12345
+7. Clicked "Logga in" → dispatchEvent(submit) triggered
+8. Server responded → redirect to /books (200 OK)
+9. Browser showed "Böcker" page with search bar and category filter
+
+Result: ✅ Registration and login work end-to-end via browser.
+Server log confirms: POST /api/users/register → 200 OK, POST /api/auth/login → 302 redirect, /books → 200 OK.

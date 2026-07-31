@@ -1,0 +1,17 @@
+=== T3: Books + Libris integration - Evidence ===
+Date: 2026-07-28
+Result: Book CRUD with ISBN/EAN lookup and Libris XSearch
+
+Files created:
+- src/books.py (Book CRUD, Libris XSearch, scan endpoint)
+
+Verified:
+- GET /api/books — lists all books (4 books returned)
+- POST /api/books — creates book with validation (422 on missing fields)
+- GET /api/books/{id} — gets single book
+- POST /api/books/scan — ISBN scan via Libris
+- Auth gate on protected routes
+- Live test: created book with ISBN 9789100999999, returned successfully
+- 102/102 tests pass
+- VERIFY_EXIT=0
+VERIFY_EXIT=0

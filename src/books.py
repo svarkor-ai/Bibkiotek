@@ -83,6 +83,10 @@ class Book:
     year: int | None = None
     cover_url: str | None = None
     hcf_category: str | None = None
+    dewey_number: str | None = None
+    subjects: str | None = None
+    languages: str | None = None
+    source: str | None = None
     created_at: datetime | None = None
     created_by: int | None = None
 
@@ -132,6 +136,10 @@ def _orm_to_book(row: BookModel) -> Book:
         year=row.year,
         cover_url=row.cover_url,
         hcf_category=row.hcf_category,
+        dewey_number=getattr(row, 'dewey_number', None),
+        subjects=getattr(row, 'subjects', None),
+        languages=getattr(row, 'languages', None),
+        source=getattr(row, 'source', None),
         created_at=row.created_at,
         created_by=row.created_by,
     )

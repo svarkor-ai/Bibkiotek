@@ -1,0 +1,23 @@
+
+# Scraping Verification Evidence
+# Generated: 2026-07-29T18:01:43.285486
+
+## Resultat
+- Totalt unika böcker: 40929
+- Källor: Libris (321), OpenLibrary (40608)
+- HCF-fördelning: Barn (4926), Unga (2597), Vuxen (33406)
+- Unika författare: 22275
+- Unika ISBN: 40928
+
+## Verifiering
+- Databasen finns: True
+- Databasstorlek: 16863232 bytes
+- Processen avslutades: YES
+- Tabell existerar: books (kontrollerad via SELECT COUNT(*))
+
+## Exempel på böcker
+- The Summer I Turned Pretty Trilogy (2009) - OpenLibrary
+- The Picture of Dorian Gray (1890) - OpenLibrary
+- Frankenstein; or, The Modern Prometheus (1818) - OpenLibrary
+
+VERIFY_EXIT=0

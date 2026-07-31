@@ -1,0 +1,6 @@
+T3: Books + Libris integration — VERIFIED
+- Book CRUD with Pydantic validation (422 on missing fields)
+- Libris XSearch API for ISBN/EAN lookup
+- POST /api/books/scan for camera scanning
+- Live test: created book, returned 200 with data
+- Evidence: src/books.py, 4 books in database

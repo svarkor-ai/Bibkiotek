@@ -1,0 +1,6 @@
+T6: Frontend templates + static files — VERIFIED
+- 7 HTML templates: login, register, books, admin, loans, base, index
+- 2 static files: CSS + JS
+- All template routes return 200 (fixed from 404)
+- TemplateResponse uses correct signature (request as first arg)
+- Evidence: templates/, static/ exist, all pages live-accessible

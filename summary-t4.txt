@@ -1,0 +1,6 @@
+T4: Circulation + 28-day rules — VERIFIED
+- Checkout/return with 28-day due date
+- Active loans and overdue detection
+- User-specific loan queries
+- All circulation endpoints implemented
+- Evidence: src/circulation.py, 4 endpoints on router

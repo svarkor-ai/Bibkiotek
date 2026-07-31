@@ -15,7 +15,7 @@ Endpoints
 """
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
 from src.auth import check_password, hash_password, require_role
@@ -111,6 +111,11 @@ def get_user(db: Session, user_id: int) -> User:
     return user
 
 
+def get_user_by_username(db: Session, username: str) -> User | None:
+    """Look up a user by username (case-sensitive). Returns None if not found."""
+    return db.query(User).filter(User.username == username).first()
+
+
 def list_users(db: Session, role_filter: str | None = None) -> list[User]:
     """Return a (optionally role-filtered) list of users.
 
@@ -202,6 +207,13 @@ def create_router() -> APIRouter:
         password: str
         role: str = "user"
         email: str | None = None
+
+        @field_validator("username", "password")
+        @classmethod
+        def not_empty(cls, v: str) -> str:
+            if not v.strip():
+                raise ValueError("must not be empty")
+            return v
 
     @router.post("/register")
     async def register_endpoint(

@@ -1,0 +1,19 @@
+=== T5: Users + app wiring + startup - Evidence ===
+Date: 2026-07-28
+Result: User management and FastAPI app integration
+
+Files created:
+- src/users.py (User CRUD, register with JSON body, role management)
+- src/app.py (FastAPI app, router mounting, static files, template routes)
+
+Verified:
+- POST /api/users/register — accepts JSON body, returns 200 (fixed from 422)
+- GET /api/users — lists users
+- GET /api/users/{id} — gets single user
+- PUT /api/users/{id} — updates user
+- RegisterRequest Pydantic model for proper validation
+- App startup event configured
+- 5 template routes: /login, /register, /books, /admin, /loans — all return 200
+- 102/102 tests pass
+- VERIFY_EXIT=0
+VERIFY_EXIT=0

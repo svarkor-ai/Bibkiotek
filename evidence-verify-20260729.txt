@@ -1,0 +1,17 @@
+=== Ad-hoc verification: Login/Register fix ===
+Date: 2026-07-29
+
+Changes:
+- src/app.py: all page routes now return HTMLResponse (was dict)
+- src/users.py: added field_validator on RegisterRequest (rejects empty username/password)
+
+pytest (test_auth + test_users): 39 passed, 0 failed, 41s
+
+Live API verification:
+- GET /login → 200 (HTML)
+- GET /register → 200 (HTML)
+- POST /api/users/register (JSON) → 200 {user}
+- POST /api/auth/login (JSON) → 200 {access_token, user}
+- POST /api/users/register (empty body) → 422 validation error
+
+VERIFY_EXIT=0
