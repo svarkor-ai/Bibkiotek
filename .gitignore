@@ -4,5 +4,6 @@
 *.db-wal
 __pycache__/
 *.pyc
+venv/
 .venv/
 .env

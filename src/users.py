@@ -14,14 +14,13 @@ Endpoints
     PUT    /api/users/{id}              → {user}           [admin/librarian]
 """
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
-from src.auth import check_password, hash_password, require_role
+from src.auth import hash_password, require_role
 from src.database import get_session
-from src.models import User, VALID_ROLES
-
+from src.models import VALID_ROLES, User
 
 # ---------------------------------------------------------------------------
 # CRUD functions — accept explicit DB session

@@ -19,10 +19,10 @@ Endpoints
     GET  /api/loans/user/{id}  → [loans]
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from src.auth import require_role
@@ -79,7 +79,7 @@ def checkout(
             detail="Book is already checked out",
         )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     loan = Loan(
         book_id=book_id,
         user_id=user_id,
@@ -108,7 +108,7 @@ def return_book(db: Session, loan_id: int) -> Loan:
             detail="Book already returned",
         )
 
-    loan.return_date = datetime.now(timezone.utc)
+    loan.return_date = datetime.now(UTC)
     db.commit()
     db.refresh(loan)
     return loan
@@ -118,10 +118,10 @@ def is_overdue(loan: Loan) -> bool:
     """Return True if the loan is overdue: active (no return) and past due_date."""
     if loan.return_date is not None:
         return False
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     due = loan.due_date
     if due.tzinfo is None:
-        due = due.replace(tzinfo=timezone.utc)
+        due = due.replace(tzinfo=UTC)
     return now > due
 
 
@@ -142,7 +142,7 @@ def get_user_loans(
 
 def get_overdue_loans(db: Session) -> list[Loan]:
     """Return all active (unreturned) loans whose due_date has passed."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return (
         db.query(Loan)
         .filter(Loan.return_date.is_(None), Loan.due_date < now)

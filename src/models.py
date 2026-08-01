@@ -1,14 +1,12 @@
 """SQLAlchemy ORM models for Bibliotek."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import (
+    DateTime,
     ForeignKey,
     Integer,
     String,
-    DateTime,
-    Enum,
-    CheckConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -38,7 +36,7 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(20), default="user")
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: datetime.now(UTC)
     )
 
     # Relationships
@@ -76,7 +74,7 @@ class Book(Base):
     languages: Mapped[str | None] = mapped_column(String(200), nullable=True)
     source: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: datetime.now(UTC)
     )
     created_by: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"), nullable=True
@@ -103,14 +101,14 @@ class Loan(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     librarian_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     checkout_date: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: datetime.now(UTC)
     )
     due_date: Mapped[datetime] = mapped_column(
         DateTime, nullable=False
     )
     return_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: datetime.now(UTC)
     )
 
     # Relationships

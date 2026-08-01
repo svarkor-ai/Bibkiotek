@@ -1,0 +1,14 @@
+target-version = "py312"
+line-length = 100
+
+[lint]
+# Only flag real bugs (F, E5, UP, BLE, S110); ignore style noise for throwaway app
+select = ["F", "E5", "E7", "UP", "BLE", "S110", "RUF", "PLR"]
+ignore = [
+    "E501",   # Line length — not worth fixing in throwaway
+    "E741",   # Single-char vars — cosmetic only
+    "B008",   # FastAPI Depends/Body in defaults is intentional
+    "BLE001", # Blind exception in throwaway catch-blocks
+    "S110",   # try/except/pass in throwaway app
+    "PLR2004","PLR0913","PLR0917","PLR0915","PLR1730","PLR1716",  # Style noise
+]

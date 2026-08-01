@@ -1,8 +1,8 @@
 """Database session, engine, and initialisation for Bibliotek."""
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
@@ -17,7 +17,7 @@ from src.models import Base
 _engine = None  # lazily created
 
 
-def get_engine() -> "engine":
+def get_engine() -> "Engine":
     """Return a shared SQLAlchemy engine (SQLite with WAL mode).
 
     WAL (Write-Ahead Logging) lets readers not block writers and vice versa,
@@ -67,7 +67,8 @@ def get_engine() -> "engine":
 
 
 # Re-export engine type for type-checkers
-from sqlalchemy import Engine  # noqa: E402, F401
+from sqlalchemy import Engine
+
 # Keep a clean reference
 # Type hint is set via docstring + the Engine import above
 

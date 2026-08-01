@@ -11,14 +11,14 @@ Endpoints:
     POST /api/auth/login  (username, password) → {access_token, user}
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
-from src.config import SECRET_KEY, JWT_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from src.config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, SECRET_KEY
 
 # ---------------------------------------------------------------------------
 # Password hashing (bcrypt directly — avoids passlib 1.7 / bcrypt 5 compat)
@@ -45,7 +45,7 @@ def check_password(password: str, hashed: str) -> bool:
 
 def create_access_token(user_id: int, role: str) -> str:
     """Create a signed JWT that expires after 24 hours."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),       # subject = user id
         "role": role,
@@ -112,7 +112,7 @@ def require_role(allowed_roles: list[str]):
 # Login endpoint stub
 # ---------------------------------------------------------------------------
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 

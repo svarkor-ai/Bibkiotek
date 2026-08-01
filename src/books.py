@@ -13,21 +13,18 @@ list_books · scan_barcode · classify_hcf · create_router
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from src.config import SECRET_KEY, JWT_ALGORITHM
-from src.models import Book as BookModel
-from src.database import get_engine
 from src.auth import require_role
+from src.database import get_engine
+from src.models import Book as BookModel
 
 log = logging.getLogger(__name__)
 

@@ -5,14 +5,12 @@ mounts static files, and runs startup initialisation (DB creation
 + admin seed user).
 """
 
-from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from src.auth import create_access_token, check_password
 from src.database import init_db
 from src.models import User
 from src.users import register_user
@@ -88,6 +86,8 @@ def _get_current_user_from_request(request: Request):
 # Middleware — inject current_user into every request state
 # ---------------------------------------------------------------------------
 
+from datetime import UTC
+
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response as StarletteResponse
@@ -158,9 +158,10 @@ async def catalog_page(
     page: int = 1,
     per_page: int = 48,
 ) -> HTMLResponse:
+    from sqlalchemy import or_
+
     from src.database import get_session_cm
     from src.models import Book
-    from sqlalchemy import or_, and_
 
     with get_session_cm() as db:
         query = db.query(Book)
@@ -194,9 +195,8 @@ async def catalog_page(
 
         total = query.count()
         pages = max(1, (total + per_page - 1) // per_page)
-        if page < 1:
-            page = 1
-        if page > pages and pages > 0:
+        page = max(page, 1)
+        if page > pages > 0:
             page = pages
 
         items = (
@@ -258,9 +258,9 @@ async def book_detail_page(
     request: Request,
     book_id: int,
 ) -> HTMLResponse:
+    from src.auth import verify_token
     from src.database import get_session_cm
     from src.models import Book, Loan
-    from src.auth import verify_token
 
     book = None
     with get_session_cm() as db:
@@ -326,9 +326,8 @@ async def login_page(request: Request, error: str = "") -> HTMLResponse:
 async def login_submit(
     request: Request,
 ) -> RedirectResponse | HTMLResponse:
-    from src.database import get_session_cm
     from src.auth import create_access_token
-    from src.users import get_user_by_username
+    from src.database import get_session_cm
 
     form = await request.form()
     username = form.get("username", "")
@@ -379,9 +378,10 @@ async def register_page(request: Request, error: str = "") -> HTMLResponse:
 async def register_submit(
     request: Request,
 ) -> HTMLResponse:
+    from fastapi.responses import RedirectResponse
+
     from src.database import get_session_cm
     from src.users import register_user as _reg
-    from fastapi.responses import RedirectResponse
 
     form = await request.form()
     username = form.get("username", "")
@@ -416,10 +416,11 @@ async def loans_page(
     request: Request,
     error: str = "",
 ) -> HTMLResponse:
-    from src.database import get_session_cm
-    from src.models import Loan, Book, User
+    from datetime import datetime
+
     from src.auth import verify_token
-    from datetime import datetime, timezone
+    from src.database import get_session_cm
+    from src.models import Book, Loan, User
 
     loans = []
     with get_session_cm() as db:
@@ -462,7 +463,7 @@ async def loans_page(
         context={**_template_context(request),
             "loans": loans,
             "error": error,
-            "now": datetime.now(timezone.utc),
+            "now": datetime.now(UTC),
         },
     )
 
@@ -477,8 +478,8 @@ async def return_book_page(
     loan_id: int,
 ) -> RedirectResponse:
     """Return a book by loan ID (cookie auth)."""
-    from src.circulation import return_book as _return_book
     from src.auth import verify_token
+    from src.circulation import return_book as _return_book
     from src.database import get_session_cm
     from src.models import Loan
 
