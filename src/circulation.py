@@ -22,7 +22,7 @@ Endpoints
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from src.auth import require_role
@@ -287,7 +287,7 @@ def create_router() -> APIRouter:
         return [_loan_to_dict(l) for l in loans]
 
     # ------------------------------------------------------------------
-    # GET /api/loans/user/{user_id}
+    # GET  /api/loans/user/{id}  → [loans]
     # ------------------------------------------------------------------
     @router.get("/user/{user_id}")
     async def list_user_loans(
@@ -296,7 +296,6 @@ def create_router() -> APIRouter:
         db: Session = Depends(get_session),
     ) -> list[dict]:
         """Loan history for a specific user."""
-        # Users can only see their own loans; librarians/admins can see any.
         if (
             current_user["role"] == "user"
             and current_user["user_id"] != user_id
@@ -307,5 +306,63 @@ def create_router() -> APIRouter:
             )
         loans = get_user_loans(db, user_id, active_only=False)
         return [_loan_to_dict(l) for l in loans]
+
+    # ------------------------------------------------------------------
+    # POST /api/loans/checkout-cookie  (prototype mode — uses cookie auth)
+    # ------------------------------------------------------------------
+    @router.post("/checkout-cookie")
+    async def loan_checkout_cookie(
+        request: Request,
+        db: Session = Depends(get_session),
+    ) -> dict:
+        """Check out a book using cookie auth (prototype-friendly)."""
+        from src.auth import verify_token
+
+        body = await request.json()
+        book_id = body.get("book_id")
+        if book_id is None:
+            raise HTTPException(status_code=400, detail="book_id is required")
+
+        cookie = request.cookies.get("access_token")
+        if not cookie:
+            raise HTTPException(status_code=401, detail="Not logged in")
+
+        data = verify_token(cookie)
+        if not data:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        user_id = data.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="No user_id in token")
+
+        loan = checkout(db, book_id, user_id, user_id)
+        return _loan_to_dict(loan)
+
+    # ------------------------------------------------------------------
+    # POST /api/loans/return-cookie  (prototype mode — uses cookie auth)
+    # ------------------------------------------------------------------
+    @router.post("/return-cookie")
+    async def loan_return_cookie(
+        request: Request,
+        db: Session = Depends(get_session),
+    ) -> dict:
+        """Return a book using cookie auth (prototype-friendly)."""
+        from src.auth import verify_token
+
+        body = await request.json()
+        loan_id = body.get("loan_id")
+        if loan_id is None:
+            raise HTTPException(status_code=400, detail="loan_id is required")
+
+        cookie = request.cookies.get("access_token")
+        if not cookie:
+            raise HTTPException(status_code=401, detail="Not logged in")
+
+        data = verify_token(cookie)
+        if not data:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        loan = return_book(db, loan_id)
+        return _loan_to_dict(loan)
 
     return router

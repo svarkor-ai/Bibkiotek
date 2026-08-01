@@ -104,6 +104,14 @@
         📕 Lån
       </button>
     </div>
+    {% elif current_user and has_active_loan %}
+    <div style="margin-top:1.5rem;padding:.75rem 1rem;background:#dcfce7;border-radius:var(--radius);color:#166534">
+      ✅ Boken är redan utlånt
+    </div>
+    {% else %}
+    <div style="margin-top:1.5rem;padding:.75rem 1rem;background:#f0f4ff;border-radius:var(--radius);color:#3730a3">
+      📕 Logga in för att låna denna bok
+    </div>
     {% endif %}
   </div>
 </div>
@@ -114,21 +122,41 @@
 <script>
 async function checkoutBook(bookId) {
   try {
-    const res = await fetch('/api/loans/checkout', {
+    const res = await fetch('/api/loans/checkout-cookie', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${APP.token}`},
-      body: JSON.stringify({
-        book_id: bookId,
-        user_id: APP.user.id,
-        librarian_id: APP.user.id
-      })
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({ book_id: bookId })
     });
-    if (!res.ok) throw new Error('Kunde inte låna boken');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Okänt fel' }));
+      throw new Error(err.detail || 'Kunde inte låna boken');
+    }
     toast('Boken är nu lånad! 📕', 'success');
     setTimeout(() => location.reload(), 1500);
   } catch (e) {
     toast('Fel vid utlåning: ' + e.message, 'error');
   }
+}
+
+function toast(message, type = 'info') {
+  const existing = document.querySelector('.toast-container');
+  if (!existing) {
+    const c = document.createElement('div');
+    c.className = 'toast-container';
+    c.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:9999;';
+    document.body.appendChild(c);
+  }
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.style.cssText = 'padding:.75rem 1rem;margin-top:.5rem;border-radius:8px;background:#fff;border:1px solid #e5e7eb;color:#1f2937;box-shadow:0 4px 12px rgba(0,0,0,.15);';
+  el.textContent = message;
+  document.querySelector('.toast-container').appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity .2s';
+    setTimeout(() => el.remove(), 200);
+  }, 3500);
 }
 </script>
 {% endblock %}

@@ -15,7 +15,7 @@
     <h3 style="font-family:var(--font-serif);color:var(--clr-primary);margin-bottom:.75rem">Populära kategorier</h3>
     <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;max-width:600px;margin:0 auto">
       {% for cat in popular_categories %}
-      <a href="/catalog?category={{ cat.name }}" class="btn btn-secondary" style="font-size:.85rem">{{ cat.name }} ({{ cat.count }})</a>
+      <a href="/catalog?category={{ cat.name }}" class="btn btn-secondary" style="font-size:.85rem">{{ cat.name }}</a>
       {% endfor %}
     </div>
   </div>

@@ -417,7 +417,7 @@ async def loans_page(
     error: str = "",
 ) -> HTMLResponse:
     from src.database import get_session_cm
-    from src.models import Loan, Book
+    from src.models import Loan, Book, User
     from src.auth import verify_token
     from datetime import datetime, timezone
 
@@ -431,25 +431,29 @@ async def loans_page(
                 if data:
                     uid = data.get("user_id")
                     if uid:
-                        from src.models import User
                         user = db.query(User).filter(User.id == uid).first()
-                        # Get loans
-                        user_loans = (
-                            db.query(Loan)
-                            .filter(Loan.user_id == uid, Loan.return_date.is_(None))
-                            .order_by(Loan.checkout_date.desc())
-                            .all()
-                        )
-                        for loan in user_loans:
-                            book = db.query(Book).filter(Book.id == loan.book_id).first()
-                            loans.append({
-                                "id": loan.id,
-                                "title": book.title if book else "Okänd bok",
-                                "author": book.author if book else None,
-                                "checkout_date": loan.checkout_date,
-                                "due_date": loan.due_date,
-                                "overdue": loan.due_date < datetime.now(timezone.utc) if loan.due_date else False,
-                            })
+                        if user:
+                            # Get all loans (active + returned)
+                            user_loans = (
+                                db.query(Loan)
+                                .filter(Loan.user_id == uid)
+                                .order_by(Loan.checkout_date.desc())
+                                .all()
+                            )
+                            for loan in user_loans:
+                                book = db.query(Book).filter(Book.id == loan.book_id).first()
+                                librarian = None
+                                if loan.librarian_id:
+                                    librarian = db.query(User).filter(User.id == loan.librarian_id).first()
+                                loans.append({
+                                    "id": loan.id,
+                                    "book_title": book.title if book else "Okänd bok",
+                                    "author": book.author if book else None,
+                                    "checkout_date": loan.checkout_date,
+                                    "due_date": loan.due_date,
+                                    "return_date": loan.return_date,
+                                    "librarian_name": librarian.username if librarian else None,
+                                })
             except Exception:
                 pass
 
@@ -458,8 +462,41 @@ async def loans_page(
         context={**_template_context(request),
             "loans": loans,
             "error": error,
+            "now": datetime.now(timezone.utc),
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# Return book by loan ID (GET redirect)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/loans/return/<int:loan_id>")
+async def return_book_page(
+    request: Request,
+    loan_id: int,
+) -> RedirectResponse:
+    """Return a book by loan ID (cookie auth)."""
+    from src.circulation import return_book as _return_book
+    from src.auth import verify_token
+    from src.database import get_session_cm
+    from src.models import Loan
+
+    with get_session_cm() as db:
+        cookie = request.cookies.get("access_token")
+        if cookie:
+            try:
+                data = verify_token(cookie)
+                if data:
+                    uid = data.get("user_id")
+                    if uid:
+                        loan = db.query(Loan).filter(Loan.id == loan_id, Loan.user_id == uid).first()
+                        if loan and not loan.return_date:
+                            _return_book(db, loan_id)
+            except Exception:
+                pass
+
+    return RedirectResponse(url="/loans", status_code=303)
 
 
 # ---------------------------------------------------------------------------
